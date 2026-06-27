@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
-type ModalType = 'auth' | 'demo' | null;
+type ModalType = 'auth' | 'demo' | 'consent' | null;
 
 interface User {
   name?: string;

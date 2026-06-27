@@ -10,6 +10,7 @@ import { Section, FadeIn } from '@/src/components/ui/section';
 import { Button } from '@/src/components/ui/button';
 import { useModal } from '@/src/components/modal-context';
 import { useRazorpay } from '@/src/hooks/use-razorpay';
+import { ConsentModal, hasConsented } from '@/src/components/consent-modal';
 
 function GradientText({ children }: { children: React.ReactNode }) {
   return (
@@ -113,6 +114,8 @@ export default function EnterprisePage() {
   const { user, openModal, setAuthMode, pendingPayment, setPendingPayment } = useModal();
   const { initiatePayment, loading, error, success, dismissSuccess } = useRazorpay();
   const [subscription, setSubscription] = useState<{ active: boolean; plan: string } | null>(null);
+  const [showConsent, setShowConsent] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<{ name: string; price: string } | null>(null);
 
   useEffect(() => {
     if (user && pendingPayment) {
@@ -138,6 +141,11 @@ export default function EnterprisePage() {
       openModal('auth');
       return;
     }
+    if (!hasConsented()) {
+      setPendingPlan(plan);
+      setShowConsent(true);
+      return;
+    }
     initiatePayment({
       amount: parsePrice(plan.price),
       plan: plan.name,
@@ -156,6 +164,26 @@ export default function EnterprisePage() {
     <>
       <Navbar />
       <MarketTicker />
+
+      <ConsentModal
+        open={showConsent}
+        onAccept={() => {
+          if (pendingPlan) {
+            initiatePayment({
+              amount: parsePrice(pendingPlan.price),
+              plan: pendingPlan.name,
+              description: `${pendingPlan.name} - Trade Metrix Enterprise`,
+              email: user?.email || '',
+              name: user?.name,
+              onSuccess: () => {
+                setSubscription({ active: true, plan: pendingPlan.name });
+              },
+            });
+            setPendingPlan(null);
+          }
+        }}
+        onClose={() => setShowConsent(false)}
+      />
 
       <main className="relative">
 
