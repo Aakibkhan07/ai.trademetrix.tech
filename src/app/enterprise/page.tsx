@@ -2,12 +2,14 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { ArrowUpRight, Check, Star, Minus, Plus } from 'lucide-react';
+import { ArrowUpRight, Check, Star, Minus, Plus, Loader2, CircleCheck, X } from 'lucide-react';
 import { Navbar } from '@/src/components/navbar';
 import { MarketTicker } from '@/src/components/market-ticker';
 import { Footer } from '@/src/components/footer';
 import { Section, FadeIn } from '@/src/components/ui/section';
 import { Button } from '@/src/components/ui/button';
+import { useModal } from '@/src/components/modal-context';
+import { useRazorpay } from '@/src/hooks/use-razorpay';
 
 function GradientText({ children }: { children: React.ReactNode }) {
   return (
@@ -90,6 +92,16 @@ function CrossIcon() {
   );
 }
 
+function parsePrice(price: string): number {
+  return parseInt(price.replace(/[₹,]/g, ''), 10);
+}
+
+const tierPlans = [
+  { name: 'Enterprise Core', price: '₹2,50,000' },
+  { name: 'Enterprise Pro', price: '₹5,00,000' },
+  { name: 'Enterprise Elite', price: '₹10,00,000' },
+];
+
 export default function EnterprisePage() {
   const [capital, setCapital] = useState(1500000);
   const [lossPct, setLossPct] = useState(8);
@@ -97,6 +109,46 @@ export default function EnterprisePage() {
   const hit = capital * (lossPct / 100);
   const guarded = capital * 0.02;
   const hitsToPay = Math.max(1, Math.round(PLAN_COST / hit));
+
+  const { user, openModal, setAuthMode, pendingPayment, setPendingPayment } = useModal();
+  const { initiatePayment, loading, error, success, dismissSuccess } = useRazorpay();
+  const [subscription, setSubscription] = useState<{ active: boolean; plan: string } | null>(null);
+
+  useEffect(() => {
+    if (user && pendingPayment) {
+      const payment = pendingPayment;
+      setPendingPayment(null);
+      initiatePayment({
+        amount: payment.amount,
+        plan: payment.plan,
+        description: `${payment.plan} - Trade Metrix Enterprise`,
+        email: user.email,
+        name: user.name,
+        onSuccess: () => {
+          setSubscription({ active: true, plan: payment.plan });
+        },
+      });
+    }
+  }, [user, pendingPayment]);
+
+  const handlePayNow = (plan: { name: string; price: string }) => {
+    if (!user) {
+      setPendingPayment({ amount: parsePrice(plan.price), plan: plan.name });
+      setAuthMode('signup');
+      openModal('auth');
+      return;
+    }
+    initiatePayment({
+      amount: parsePrice(plan.price),
+      plan: plan.name,
+      description: `${plan.name} - Trade Metrix Enterprise`,
+      email: user.email,
+      name: user.name,
+      onSuccess: () => {
+        setSubscription({ active: true, plan: plan.name });
+      },
+    });
+  };
 
   const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 
@@ -555,12 +607,13 @@ export default function EnterprisePage() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="https://wa.me/917415660385"
-                  className="block w-full text-center py-3 rounded-xl text-sm font-semibold bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+                <button
+                  onClick={() => handlePayNow(tierPlans[0])}
+                  disabled={loading}
+                  className="block w-full text-center py-3 rounded-xl text-sm font-semibold bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Get Core
-                </a>
+                  {loading ? <><Loader2 size={14} className="inline animate-spin mr-1" /> Processing...</> : 'Get Core'}
+                </button>
               </div>
             </FadeIn>
 
@@ -592,12 +645,13 @@ export default function EnterprisePage() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="https://wa.me/917415660385"
-                  className="block w-full text-center py-3 rounded-xl text-sm font-semibold bg-accent text-background hover:bg-accent-dark transition-all duration-200 shadow-lg shadow-accent/20"
+                <button
+                  onClick={() => handlePayNow(tierPlans[1])}
+                  disabled={loading}
+                  className="block w-full text-center py-3 rounded-xl text-sm font-semibold bg-accent text-background hover:bg-accent-dark transition-all duration-200 shadow-lg shadow-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Get Pro <ArrowUpRight size={14} className="inline" />
-                </a>
+                  {loading ? <><Loader2 size={14} className="inline animate-spin mr-1" /> Processing...</> : <>Get Pro <ArrowUpRight size={14} className="inline" /></>}
+                </button>
               </div>
             </FadeIn>
 
@@ -626,15 +680,49 @@ export default function EnterprisePage() {
                     </li>
                   ))}
                 </ul>
+                <button
+                  onClick={() => handlePayNow(tierPlans[2])}
+                  disabled={loading}
+                  className="block w-full text-center py-3 rounded-xl text-sm font-semibold bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? <><Loader2 size={14} className="inline animate-spin mr-1" /> Processing...</> : <>Buy Now <ArrowUpRight size={14} className="inline" /></>}
+                </button>
                 <a
                   href="https://wa.me/917415660385"
-                  className="block w-full text-center py-3 rounded-xl text-sm font-semibold bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+                  className="block w-full text-center mt-2 py-2 rounded-xl text-xs font-medium text-muted border border-white/[0.06] hover:text-white transition-colors"
                 >
-                  Talk to Us
+                  or talk to us on WhatsApp
                 </a>
               </div>
             </FadeIn>
           </div>
+
+          {error && (
+            <div className="max-w-lg mx-auto mt-6 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-lg mx-auto mt-6 px-5 py-4 rounded-xl bg-green-500/10 border border-green-500/20"
+            >
+              <div className="flex items-start gap-3">
+                <CircleCheck size={20} className="text-green-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white">Payment Successful!</p>
+                  <p className="text-xs text-muted mt-0.5">
+                    Your {success.plan} subscription is now active. We'll reach out within 24 hours to set up your desk.
+                  </p>
+                </div>
+                <button onClick={dismissSuccess} className="text-muted hover:text-white transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           <div className="flex items-center justify-center gap-3 mt-6 flex-wrap">
             <span className="text-xs px-4 py-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] text-muted">Pay via Razorpay</span>
@@ -748,6 +836,54 @@ export default function EnterprisePage() {
             </div>
           </FadeIn>
         </Section>
+
+        <div className="section-divider" />
+
+        {/* SOCIAL PROOF */}
+        <section className="py-16">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="rounded-2xl border border-white/[0.06] bg-card p-8 md:p-10 card-depth">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
+                {[
+                  { value: '₹50Cr+', label: 'AUM Managed' },
+                  { value: '25+', label: 'Active Enterprise Desks' },
+                  { value: '0', label: 'Security Incidents' },
+                  { value: '99.9%', label: 'Platform Uptime' },
+                ].map((stat) => (
+                  <div key={stat.label}>
+                    <div className="text-2xl md:text-3xl font-black text-white tracking-tight">{stat.value}</div>
+                    <div className="text-xs text-muted mt-1">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="section-divider" />
+
+        {/* SECURITY & COMPLIANCE */}
+        <section className="py-16 md:py-20">
+          <div className="text-center max-w-3xl mx-auto mb-12 px-4 sm:px-6 lg:px-8">
+            <SecLabel>Security & Compliance</SecLabel>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Built to institutional standards.</h2>
+            <p className="text-sm text-muted max-w-lg mx-auto">Your strategies, data, and capital are protected at every layer.</p>
+          </div>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { icon: '🔐', title: 'AES-256 Encryption', desc: 'Data encrypted at rest and in transit with TLS 1.3' },
+              { icon: '🇮🇳', title: 'Data Localization', desc: 'All data stored on India-based servers. Compliant with IT Act 2000' },
+              { icon: '🔑', title: '2FA & API Security', desc: 'Hardware-backed key vaults with multi-factor authentication' },
+              { icon: '📋', title: 'Audit Trail', desc: 'Immutable 7-year logs for every trade and system event' },
+            ].map((item) => (
+              <div key={item.title} className="rounded-xl border border-white/[0.06] bg-card p-5 card-depth text-center">
+                <div className="text-xl mb-3">{item.icon}</div>
+                <h4 className="text-sm font-semibold text-white mb-1">{item.title}</h4>
+                <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <div className="section-divider" />
 
