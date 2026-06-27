@@ -168,10 +168,16 @@ export default function EnterprisePage() {
 
   const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 
+  const [clicked, setClicked] = useState(0);
+
   return (
     <ModalProvider>
       <Navbar />
       <MarketTicker />
+
+      <div style={{ position: 'fixed', bottom: 10, right: 10, zIndex: 9999, background: '#ef4444', color: '#0A0A0A', padding: '8px 16px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }} onClick={() => setClicked(c => c + 1)}>
+        Test Click: {clicked}
+      </div>
 
       <DemoModal />
       <AuthModal />
