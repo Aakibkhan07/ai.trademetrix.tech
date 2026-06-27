@@ -123,6 +123,12 @@ export default function EnterprisePage() {
     if (user && pendingPayment) {
       const payment = pendingPayment;
       setPendingPayment(null);
+      const plan = { name: payment.plan, price: `₹${payment.amount.toLocaleString('en-IN')}` };
+      if (!hasConsented()) {
+        setPendingPlan(plan);
+        setShowConsent(true);
+        return;
+      }
       initiatePayment({
         amount: payment.amount,
         plan: payment.plan,
@@ -134,7 +140,7 @@ export default function EnterprisePage() {
         },
       });
     }
-  }, [user, pendingPayment]);
+  }, [user, pendingPayment, initiatePayment]);
 
   const handlePayNow = (plan: { name: string; price: string }) => {
     if (!user) {
