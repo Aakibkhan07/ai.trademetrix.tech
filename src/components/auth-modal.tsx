@@ -41,6 +41,12 @@ export function AuthModal() {
     }
   }, [isOpen]);
 
+  const handleLogin = () => {
+    setError('');
+    setUser({ email, broker: broker || undefined });
+    closeModal();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -73,8 +79,7 @@ export function AuthModal() {
       }, 2000);
       return;
     }
-    setUser({ email, broker: broker || undefined });
-    closeModal();
+    handleLogin();
   };
 
   const brokers = ['Zerodha', 'Angel One', 'ICICI Direct', 'Upstox', 'HDFC Securities', 'Other'];
@@ -308,8 +313,12 @@ export function AuthModal() {
                         Forgot password?
                       </button>
                     </div>
+                    {error && (
+                      <p className="text-[11px] text-red-400 text-center bg-red-500/10 p-2 rounded-lg">{error}</p>
+                    )}
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={handleLogin}
                       className="w-full py-2.5 text-sm font-medium bg-accent text-background rounded-xl hover:bg-accent-dark transition-colors shadow-lg shadow-accent/20 inline-flex items-center justify-center gap-1.5"
                     >
                       Log In
