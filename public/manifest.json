@@ -1,0 +1,17 @@
+{
+  "name": "TradeMetrix",
+  "short_name": "TradeMetrix",
+  "description": "Modern algorithmic trading platform for Indian traders",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#EF4444",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  password            String
+  broker              String?
+  plan                String?
+  trialEndsAt         DateTime?
+  trialUsed           Boolean   @default(false)
+  subscribedAt        DateTime?
+  subscriptionEndsAt  DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  payments            Payment[]
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  razorpayOrderId   String   @unique
+  razorpayPaymentId String   @unique
+  amount            Int
+  currency          String   @default("INR")
+  plan              String
+  status            String   @default("captured")
+  createdAt         DateTime @default(now())
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
