@@ -153,6 +153,108 @@ export default function EnterprisePage() {
 
         <div className="section-divider" />
 
+        {/* HOW IT WORKS */}
+        <Section id="how-it-works">
+          <div className="text-center max-w-3xl mx-auto mb-16 md:mb-24 px-4 sm:px-6 lg:px-8">
+            <SecLabel>How It Works</SecLabel>
+            <SecTitle>Your dedicated desk in 3 steps.</SecTitle>
+            <SecSub>No complex setup. No back-and-forth. We handle the infrastructure, you keep control of your capital.</SecSub>
+          </div>
+
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-3 gap-5">
+            {[
+              { num: '01', title: 'We build your strategy', desc: 'You share your capital, risk appetite and market preference. We build and backtest a custom strategy sized for your account — not a template.' },
+              { num: '02', title: 'We provision your desk', desc: 'A dedicated Mumbai VPS is spun up, RiskGuard is configured, and your strategy is deployed. All in about a week.' },
+              { num: '03', title: 'You go live with proof', desc: 'The system runs in shadow mode on live data first. You watch the trades, verify the logic, then give the go-ahead for live capital.' },
+            ].map((step, i) => (
+              <FadeIn key={step.num} delay={i * 0.1}>
+                <div className="rounded-2xl border border-white/[0.06] bg-card p-7 card-depth hover-lift text-center">
+                  <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent font-black text-lg mx-auto mb-5">
+                    {step.num}
+                  </div>
+                  <h3 className="text-base font-semibold text-white mb-2">{step.title}</h3>
+                  <p className="text-sm text-muted leading-relaxed">{step.desc}</p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </Section>
+
+        <div className="section-divider" />
+
+        {/* PLATFORM */}
+        <Section id="platform">
+          <div className="text-center max-w-3xl mx-auto mb-16 md:mb-24 px-4 sm:px-6 lg:px-8">
+            <SecLabel>Platform</SecLabel>
+            <SecTitle>Enterprise-grade dashboard, tailored for you.</SecTitle>
+            <SecSub>A real-time trading operations centre designed for serious capital — not a retail app with extra buttons.</SecSub>
+          </div>
+
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-3 gap-4">
+            {[
+              { icon: '📊', title: 'Live P&L dashboard', desc: 'Real-time position-level P&L, exposure tracking, and daily P&L curves. See exactly where your capital is at every moment.' },
+              { icon: '📋', title: 'Trade log & audit trail', desc: 'Every entry, exit, and signal logged with timestamps. Full audit trail for your records — no black box.' },
+              { icon: '📱', title: 'Mobile monitoring', desc: 'Monitor your desk from anywhere. Real-time alerts on Telegram and email for entries, exits, and risk events.' },
+              { icon: '📈', title: 'Performance analytics', desc: 'Win rate, Sharpe ratio, max drawdown, and equity curves updated after every session. Data you can act on.' },
+              { icon: '⚙️', title: 'Strategy controls', desc: 'Pause, stop, or adjust risk parameters anytime from the dashboard. You stay in full command of your capital.' },
+              { icon: '🔔', title: 'Instant alerts', desc: 'Telegram and email notifications for every trade, risk breach, and daily square-off. No screen-staring required.' },
+            ].map((feat, i) => (
+              <FadeIn key={feat.title} delay={i * 0.06}>
+                <div className="rounded-2xl border border-white/[0.06] bg-card p-6 card-depth hover-lift h-full group">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl bg-accent/10 border border-accent/20 mb-4 group-hover:bg-accent/15 transition-colors">
+                    {feat.icon}
+                  </div>
+                  <h3 className="text-base font-semibold text-white mb-2">{feat.title}</h3>
+                  <p className="text-sm text-muted leading-relaxed">{feat.desc}</p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </Section>
+
+        <div className="section-divider" />
+
+        {/* STRATEGIES */}
+        <Section id="strategies">
+          <div className="text-center max-w-3xl mx-auto mb-16 md:mb-24 px-4 sm:px-6 lg:px-8">
+            <SecLabel>Strategies</SecLabel>
+            <SecTitle>Built for your capital, not a template.</SecTitle>
+            <SecSub>Every enterprise strategy is custom-built and backtested on 15+ years of data before it touches your account.</SecSub>
+          </div>
+
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-3 gap-4">
+            {[
+              { name: 'Trend Following', tag: 'Directional', desc: 'Captures sustained moves using multi-timeframe confirmation. Ideal for NIFTY and BANK NIFTY futures.', win: '68%', dd: '8.2%', sharpe: '2.1' },
+              { name: 'Mean Reversion', tag: 'Counter-Trend', desc: 'Profits from statistical pullbacks using z-score and Bollinger Band confluences. Best in range-bound markets.', win: '72%', dd: '5.1%', sharpe: '1.8' },
+              { name: 'Breakout Momentum', tag: 'High Momentum', desc: 'Detects breakouts with volume confirmation and volatility filters. Higher reward per trade with dynamic position sizing.', win: '55%', dd: '15.3%', sharpe: '1.5' },
+              { name: 'Options Premium', tag: 'Theta Capture', desc: 'Sells out-of-the-money options strangles with delta hedging. IV rank and term structure drive entry timing.', win: '65%', dd: '6.8%', sharpe: '1.9' },
+              { name: 'Scalp Pro', tag: 'Intraday', desc: 'Sub-second execution using order flow imbalance and tape reading. Designed for highly liquid stocks during peak hours.', win: '61%', dd: '12.4%', sharpe: '1.3' },
+              { name: 'Swing Systematic', tag: 'Multi-Day', desc: 'Holds positions 2-7 days using ATR-based trailing stops and pyramiding. Lowest screen time, highest per-trade return.', win: '76%', dd: '4.2%', sharpe: '2.3' },
+            ].map((strat, i) => (
+              <FadeIn key={strat.name} delay={i * 0.06}>
+                <div className="rounded-2xl border border-white/[0.06] bg-card p-6 card-depth hover-lift h-full group">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-base font-semibold text-white">{strat.name}</h3>
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">{strat.tag}</span>
+                  </div>
+                  <p className="text-sm text-muted leading-relaxed mb-4">{strat.desc}</p>
+                  <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/[0.06]">
+                    <div><div className="text-[10px] text-muted uppercase tracking-wider">Win Rate</div><div className="text-sm font-bold text-white">{strat.win}</div></div>
+                    <div><div className="text-[10px] text-muted uppercase tracking-wider">Max DD</div><div className="text-sm font-bold text-white">{strat.dd}</div></div>
+                    <div><div className="text-[10px] text-muted uppercase tracking-wider">Sharpe</div><div className="text-sm font-bold text-white">{strat.sharpe}</div></div>
+                  </div>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+
+          <p className="text-center text-xs text-muted mt-6 max-w-xl mx-auto px-4">
+            These are reference profiles. Your enterprise strategy is custom-built and may differ based on your capital, risk appetite, and market view.
+          </p>
+        </Section>
+
+        <div className="section-divider" />
+
         {/* CALCULATOR */}
         <Section id="calc">
           <div className="text-center max-w-3xl mx-auto mb-16 md:mb-24 px-4 sm:px-6 lg:px-8">
