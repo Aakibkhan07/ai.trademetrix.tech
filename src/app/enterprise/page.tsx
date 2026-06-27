@@ -218,39 +218,71 @@ export default function EnterprisePage() {
         <Section id="strategies">
           <div className="text-center max-w-3xl mx-auto mb-16 md:mb-24 px-4 sm:px-6 lg:px-8">
             <SecLabel>Strategies</SecLabel>
-            <SecTitle>Built for your capital, not a template.</SecTitle>
-            <SecSub>Every enterprise strategy is custom-built and backtested on 15+ years of data before it touches your account.</SecSub>
+            <SecTitle>50+ strategies at your disposal.</SecTitle>
+            <SecSub>Retail gives you 2–3 templated options. Enterprise unlocks 50+ custom-built strategies spanning every market condition.</SecSub>
           </div>
 
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-3 gap-4">
-            {[
-              { name: 'Trend Following', tag: 'Directional', desc: 'Captures sustained moves using multi-timeframe confirmation. Ideal for NIFTY and BANK NIFTY futures.', win: '68%', dd: '8.2%', sharpe: '2.1' },
-              { name: 'Mean Reversion', tag: 'Counter-Trend', desc: 'Profits from statistical pullbacks using z-score and Bollinger Band confluences. Best in range-bound markets.', win: '72%', dd: '5.1%', sharpe: '1.8' },
-              { name: 'Breakout Momentum', tag: 'High Momentum', desc: 'Detects breakouts with volume confirmation and volatility filters. Higher reward per trade with dynamic position sizing.', win: '55%', dd: '15.3%', sharpe: '1.5' },
-              { name: 'Options Premium', tag: 'Theta Capture', desc: 'Sells out-of-the-money options strangles with delta hedging. IV rank and term structure drive entry timing.', win: '65%', dd: '6.8%', sharpe: '1.9' },
-              { name: 'Scalp Pro', tag: 'Intraday', desc: 'Sub-second execution using order flow imbalance and tape reading. Designed for highly liquid stocks during peak hours.', win: '61%', dd: '12.4%', sharpe: '1.3' },
-              { name: 'Swing Systematic', tag: 'Multi-Day', desc: 'Holds positions 2-7 days using ATR-based trailing stops and pyramiding. Lowest screen time, highest per-trade return.', win: '76%', dd: '4.2%', sharpe: '2.3' },
-            ].map((strat, i) => (
-              <FadeIn key={strat.name} delay={i * 0.06}>
-                <div className="rounded-2xl border border-white/[0.06] bg-card p-6 card-depth hover-lift h-full group">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-base font-semibold text-white">{strat.name}</h3>
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">{strat.tag}</span>
-                  </div>
-                  <p className="text-sm text-muted leading-relaxed mb-4">{strat.desc}</p>
-                  <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/[0.06]">
-                    <div><div className="text-[10px] text-muted uppercase tracking-wider">Win Rate</div><div className="text-sm font-bold text-white">{strat.win}</div></div>
-                    <div><div className="text-[10px] text-muted uppercase tracking-wider">Max DD</div><div className="text-sm font-bold text-white">{strat.dd}</div></div>
-                    <div><div className="text-[10px] text-muted uppercase tracking-wider">Sharpe</div><div className="text-sm font-bold text-white">{strat.sharpe}</div></div>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-5 items-stretch">
+            <FadeIn>
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 h-full">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-muted text-lg font-bold">R</div>
+                  <div>
+                    <h3 className="text-lg font-bold text-muted">Retail Plan</h3>
+                    <p className="text-xs text-muted/60">What everyone else gets</p>
                   </div>
                 </div>
-              </FadeIn>
-            ))}
+                <ul className="space-y-3.5">
+                  {[
+                    '2–3 pre-built strategies only',
+                    'Same template for all users',
+                    'No customisation possible',
+                    'Generic risk parameters',
+                    'Designed for 1–5L capital',
+                    'No multi-timeframe support',
+                    'Single market segment',
+                    'No walk-forward optimisation',
+                  ].map((item) => (
+                    <li key={item} className="flex gap-3 text-sm text-muted items-start">
+                      <CrossIcon /> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </FadeIn>
+            <FadeIn delay={0.15}>
+              <div className="rounded-2xl border border-accent/20 bg-card p-8 h-full card-depth card-border-accent">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-lg font-bold">E</div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Enterprise</h3>
+                    <p className="text-xs text-muted">50+ strategies, fully custom</p>
+                  </div>
+                </div>
+                <ul className="space-y-3.5">
+                  {[
+                    '50+ strategy library access',
+                    'Custom-built for your capital',
+                    'Full parameter customisation',
+                    'RiskGuard per-strategy rules',
+                    'Built for 10L+ capital',
+                    'Multi-timeframe confluences',
+                    'All segments: equity, F&O, commodities',
+                    'Walk-forward & genetic optimisation',
+                  ].map((item) => (
+                    <li key={item} className="flex gap-3 text-sm text-white items-start">
+                      <CheckIcon /> {item}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-6 pt-5 border-t border-white/[0.06]">
+                  <p className="text-xs text-muted leading-relaxed">
+                    Your dedicated strategist selects and tunes the right approach for your capital, risk tolerance, and market view — not an algorithm matching you to a template.
+                  </p>
+                </div>
+              </div>
+            </FadeIn>
           </div>
-
-          <p className="text-center text-xs text-muted mt-6 max-w-xl mx-auto px-4">
-            These are reference profiles. Your enterprise strategy is custom-built and may differ based on your capital, risk appetite, and market view.
-          </p>
         </Section>
 
         <div className="section-divider" />
@@ -406,6 +438,40 @@ export default function EnterprisePage() {
                   ))}
                 </ul>
               </div>
+            </div>
+          </FadeIn>
+        </Section>
+
+        <div className="section-divider" />
+
+        {/* BROKER LOGOS */}
+        <Section id="brokers">
+          <FadeIn className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <SecLabel>Your Account. Your Control.</SecLabel>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Trade on your existing broker.</h2>
+            <p className="text-sm text-muted mb-10 max-w-lg mx-auto">We never hold your funds. Orders execute through your own broker account via approved APIs.</p>
+            <div className="flex items-center justify-center gap-8 md:gap-14 flex-wrap">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border border-white/[0.08] bg-card flex items-center justify-center card-depth hover-lift">
+                  <span className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: '#2525E2' }}>Fyers</span>
+                </div>
+                <span className="text-xs text-muted">Fully supported</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border border-white/[0.08] bg-card flex items-center justify-center card-depth hover-lift">
+                  <span className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: '#00B5E2' }}>Dhan</span>
+                </div>
+                <span className="text-xs text-muted">Fully supported</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border border-white/[0.08] bg-card flex items-center justify-center card-depth hover-lift">
+                  <span className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: '#8B5CF6' }}>Zerodha</span>
+                </div>
+                <span className="text-xs text-muted">Coming soon</span>
+              </div>
+            </div>
+            <div className="mt-8 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-accent/20 bg-accent/[0.04] text-xs text-accent font-medium">
+              <Check size={12} /> Your funds never leave your account
             </div>
           </FadeIn>
         </Section>
