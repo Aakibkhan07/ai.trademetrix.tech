@@ -646,11 +646,12 @@ export default function EnterprisePage() {
                   ))}
                 </ul>
                 <button
+                  type="button"
                   onClick={() => handlePayNow(tierPlans[0])}
                   disabled={loading}
                   className="block w-full text-center py-3 rounded-xl text-sm font-semibold bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? <><Loader2 size={14} className="inline animate-spin mr-1" /> Processing...</> : 'Get Core'}
+                  {loading ? 'Processing...' : 'Get Core'}
                 </button>
               </div>
             </FadeIn>
@@ -684,11 +685,12 @@ export default function EnterprisePage() {
                   ))}
                 </ul>
                 <button
+                  type="button"
                   onClick={() => handlePayNow(tierPlans[1])}
                   disabled={loading}
                   className="block w-full text-center py-3 rounded-xl text-sm font-semibold bg-accent text-background hover:bg-accent-dark transition-all duration-200 shadow-lg shadow-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? <><Loader2 size={14} className="inline animate-spin mr-1" /> Processing...</> : <>Get Pro <ArrowUpRight size={14} className="inline" /></>}
+                  {loading ? 'Processing...' : <><span>Get Pro</span> <ArrowUpRight size={14} className="inline" /></>}
                 </button>
               </div>
             </FadeIn>
@@ -719,11 +721,12 @@ export default function EnterprisePage() {
                   ))}
                 </ul>
                 <button
+                  type="button"
                   onClick={() => handlePayNow(tierPlans[2])}
                   disabled={loading}
                   className="block w-full text-center py-3 rounded-xl text-sm font-semibold bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? <><Loader2 size={14} className="inline animate-spin mr-1" /> Processing...</> : <>Buy Now <ArrowUpRight size={14} className="inline" /></>}
+                  {loading ? 'Processing...' : <><span>Buy Now</span> <ArrowUpRight size={14} className="inline" /></>}
                 </button>
                 <a
                   href="https://wa.me/917415660385"
