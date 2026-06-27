@@ -8,9 +8,11 @@ import { MarketTicker } from '@/src/components/market-ticker';
 import { Footer } from '@/src/components/footer';
 import { Section, FadeIn } from '@/src/components/ui/section';
 import { Button } from '@/src/components/ui/button';
-import { useModal } from '@/src/components/modal-context';
+import { useModal, ModalProvider } from '@/src/components/modal-context';
 import { useRazorpay } from '@/src/hooks/use-razorpay';
 import { ConsentModal, hasConsented } from '@/src/components/consent-modal';
+import { AuthModal } from '@/src/components/auth-modal';
+import { DemoModal } from '@/src/components/demo-modal';
 
 function GradientText({ children }: { children: React.ReactNode }) {
   return (
@@ -161,10 +163,12 @@ export default function EnterprisePage() {
   const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 
   return (
-    <>
+    <ModalProvider>
       <Navbar />
       <MarketTicker />
 
+      <DemoModal />
+      <AuthModal />
       <ConsentModal
         open={showConsent}
         onAccept={() => {
@@ -954,7 +958,7 @@ export default function EnterprisePage() {
       </main>
 
       <Footer />
-    </>
+    </ModalProvider>
   );
 }
 
