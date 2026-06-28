@@ -153,6 +153,8 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
 
 /* Trades History */
 .trades-card { padding:12px 16px 16px; }
+.export-btn { background:var(--red-bg); border:1px solid rgba(239,68,68,0.2); border-radius:8px; color:var(--accent); font-size:11px; padding:6px 12px; font-family:var(--font); cursor:pointer; font-weight:500; transition:all 0.15s; white-space:nowrap; }
+.export-btn:hover { background:rgba(239,68,68,0.2); border-color:var(--accent); }
 .filter-bar { display:flex; gap:8px; flex-wrap:wrap; }
 .filter-select { background:var(--card); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:11px; padding:6px 10px; font-family:var(--font); cursor:pointer; outline:none; min-width:110px; }
 .filter-select:hover { border-color:var(--border-hover); }
@@ -261,12 +263,15 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
 </div>
 
 <div class="section" id="tradesSection">
-  <div class="section-header">
+    <div class="section-header">
     <div>
       <div class="section-title">Trades History</div>
       <div class="section-subtitle" id="tradesSubtitle">All trades · Jan 2026 – present</div>
     </div>
-    <div class="filter-bar" id="filterBar">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button id="exportBtn" class="export-btn" onclick="exportToExcel()">⬇ Export Excel</button>
+      <div class="filter-bar" id="filterBar"></div>
+    </div>
       <select id="filterMonth" class="filter-select"><option value="">All Months</option></select>
       <select id="filterStrategy" class="filter-select"><option value="">All Strategies</option></select>
       <select id="filterSymbol" class="filter-select"><option value="">All Symbols</option></select>
@@ -825,6 +830,70 @@ function renderStrategyPnl(trades) {
       + '<td class="pnl-up">+₹'+best.toLocaleString('en-IN')+'</td>'
       + '<td class="pnl-down">-₹'+Math.abs(worst).toLocaleString('en-IN')+'</td></tr>';
   }).join('');
+}
+
+function exportToExcel() {
+  const rows = [['#','Date','Symbol','Instrument','Spot','Type','Strike','Qty','Entry','Exit','P&L','Strategy','Entry Time','Exit Time','Holding (min)']];
+  trades.forEach((t, i) => {
+    rows.push([i+1, t.date, t.symbol, t.instr, t.spot, t.type, t.strike, t.qty, t.entry, t.exit, t.pnl, t.strategy, t.entryTime, t.exitTime, t.holding]);
+  });
+
+  const totalPnl = trades.reduce((s,t) => s + t.pnl, 0);
+  const wins = trades.filter(t => t.pnl > 0).length;
+  const losses = trades.filter(t => t.pnl < 0).length;
+  const wr = trades.length ? (wins/trades.length*100).toFixed(1) : '0.0';
+  const ret = (totalPnl / ASSUMED_CAPITAL * 100).toFixed(2);
+
+  let xml = '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>';
+  xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"';
+  xml += ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
+  xml += '<Styles><Style ss:ID="header"><Font ss:Bold="1" ss:Color="#EF4444"/><Interior ss:Color="#1a1a1a" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>';
+  xml += '<Style ss:ID="pnlUp"><Font ss:Color="#22C55E"/></Style>';
+  xml += '<Style ss:ID="pnlDown"><Font ss:Color="#EF4444"/></Style>';
+  xml += '<Style ss:ID="num"><NumberFormat ss:Format="#,##0"/></Style>';
+  xml += '<Style ss:ID="pct"><NumberFormat ss:Format="0.0%"/></Style></Styles>';
+
+  xml += '<Worksheet ss:Name="Trades History"><Table>';
+  // Headers
+  xml += '<Row>';
+  rows[0].forEach(h => { xml += '<Cell ss:StyleID="header"><Data ss:Type="String">'+h+'</Data></Cell>'; });
+  xml += '</Row>';
+  // Data
+  for (let i = 1; i < rows.length; i++) {
+    xml += '<Row>';
+    rows[i].forEach((v, ci) => {
+      const isPnl = ci === 10;
+      const style = isPnl ? (v >= 0 ? 'pnlUp' : 'pnlDown') : (ci >= 4 && ci <= 9 ? 'num' : '');
+      const type = typeof v === 'number' ? 'Number' : 'String';
+      xml += '<Cell'+(style?' ss:StyleID="'+style+'"':'')+'><Data ss:Type="'+type+'">'+v+'</Data></Cell>';
+    });
+    xml += '</Row>';
+  }
+  xml += '</Table></Worksheet>';
+
+  // Summary sheet
+  xml += '<Worksheet ss:Name="Summary"><Table>';
+  xml += '<Row><Cell ss:StyleID="header"><Data ss:Type="String">Metric</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Value</Data></Cell></Row>';
+  xml += '<Row><Cell><Data ss:Type="String">Total Trades</Data></Cell><Cell><Data ss:Type="Number">'+trades.length+'</Data></Cell></Row>';
+  xml += '<Row><Cell><Data ss:Type="String">Wins</Data></Cell><Cell><Data ss:Type="Number">'+wins+'</Data></Cell></Row>';
+  xml += '<Row><Cell><Data ss:Type="String">Losses</Data></Cell><Cell><Data ss:Type="Number">'+losses+'</Data></Cell></Row>';
+  xml += '<Row><Cell><Data ss:Type="String">Win Rate</Data></Cell><Cell><Data ss:Type="Number">'+wr+'</Data></Cell></Row>';
+  xml += '<Row><Cell><Data ss:Type="String">Total P&L</Data></Cell><Cell ss:StyleID="'+(totalPnl>=0?'pnlUp':'pnlDown')+'"><Data ss:Type="Number">'+totalPnl+'</Data></Cell></Row>';
+  xml += '<Row><Cell><Data ss:Type="String">Assumed Capital</Data></Cell><Cell><Data ss:Type="Number">'+ASSUMED_CAPITAL+'</Data></Cell></Row>';
+  xml += '<Row><Cell><Data ss:Type="String">Return on Capital</Data></Cell><Cell ss:StyleID="'+(totalPnl>=0?'pnlUp':'pnlDown')+'"><Data ss:Type="Number">'+ret+'</Data></Cell></Row>';
+  xml += '<Row><Cell><Data ss:Type="String">Nifty Trades</Data></Cell><Cell><Data ss:Type="Number">'+trades.filter(t=>t.symbol==='NIFTY').length+'</Data></Cell></Row>';
+  xml += '<Row><Cell><Data ss:Type="String">Sensex Trades</Data></Cell><Cell><Data ss:Type="Number">'+trades.filter(t=>t.symbol==='SENSEX').length+'</Data></Cell></Row>';
+  xml += '</Table></Worksheet></Workbook>';
+
+  const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'trade_metrix_performance_2026.xls';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function generateFallbackPrices(start, drift, vol) {
