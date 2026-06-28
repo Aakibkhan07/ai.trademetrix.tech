@@ -445,7 +445,7 @@ async function init() {
   allDates.sort();
 
   // Generate trades using real prices
-  const DATA_VER = 6;
+  const DATA_VER = 7;
   let trades;
   try {
     const ver = parseInt(localStorage.getItem('tm_perf_ver') || '0');
@@ -508,9 +508,9 @@ async function init() {
   }
 
   // Hide loader, show content
-  document.getElementById('loader').style.display = 'none';
-  document.getElementById('navbar').style.display = '';
-  document.getElementById('mainContent').style.display = '';
+document.getElementById('loader').style.display = 'none';
+document.getElementById('navbar').style.display = '';
+document.getElementById('mainContent').style.display = 'block';
 
   // Render
   renderHero(trades, allDates);
@@ -688,7 +688,9 @@ function generateFallbackPrices(start, drift, vol) {
   return prices;
 }
 
-init();
+init().catch(e => {
+  document.getElementById('loader').innerHTML = '<div style="text-align:center;padding:40px"><div style="font-size:40px;margin-bottom:16px">⚠️</div><div class="loader-text">Could not load performance data</div><div class="loader-sub" style="margin-top:8px">' + e.message + '</div></div>';
+});
 </script>
 </body>
 </html>
