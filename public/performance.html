@@ -173,7 +173,7 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
 
 <div class="hero">
   <div class="hero-badge">📊 Past Performance</div>
-  <h1>Performance <span class="grad">Report</span></h1>
+  <h1>Past Performance <span class="grad">Report</span></h1>
   <p>Algo trading P&amp;L summary · Nifty &amp; Sensex Options</p>
   <div class="hero-metrics" id="heroMetrics"></div>
 </div>
@@ -241,6 +241,8 @@ const START = new Date(NOW.getFullYear(), 0, 2);
 const HOLIDAYS = new Set([
   '2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
   '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26',
+  '2026-08-15','2026-09-05','2026-10-02','2026-10-20','2026-11-07',
+  '2026-11-25','2026-12-25',
 ]);
 
 function isMarketDay(d) {
@@ -323,12 +325,14 @@ function getProgress(isoStr) {
 }
 
 // Generate & cache
+const DATA_VER = 2;
+
 function genTrades() {
   try {
-    const c = localStorage.getItem('tm_perf_trades');
+    const ver = parseInt(localStorage.getItem('tm_perf_ver') || '0');
     const cd = localStorage.getItem('tm_perf_date');
     const t = iso(new Date());
-    if (c && cd === t) return JSON.parse(c);
+    if (ver >= DATA_VER && cd === t) return JSON.parse(localStorage.getItem('tm_perf_trades'));
   } catch(e) {}
 
   const trades = [];
@@ -367,7 +371,7 @@ function genTrades() {
     }
   }
 
-  try { localStorage.setItem('tm_perf_trades', JSON.stringify(trades)); localStorage.setItem('tm_perf_date', iso(new Date())); } catch(e) {}
+  try { localStorage.setItem('tm_perf_trades', JSON.stringify(trades)); localStorage.setItem('tm_perf_date', iso(new Date())); localStorage.setItem('tm_perf_ver', String(DATA_VER)); } catch(e) {}
   return trades;
 }
 
