@@ -31,8 +31,8 @@ export function PerformanceDashboard() {
   return (
     <Section id="performance" className="bg-surface/30">
       <SectionHeader
-        title="Performance at a Glance"
-        subtitle="Real-time performance metrics for all your strategies. Data you can trust."
+        title="Past Performance"
+        subtitle="Historical performance metrics across all your strategies. Verified and backtested."
       />
 
       <div ref={ref} className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
