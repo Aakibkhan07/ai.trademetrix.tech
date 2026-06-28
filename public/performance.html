@@ -245,9 +245,16 @@ const HOLIDAYS = new Set([
   '2026-11-25','2026-12-25',
 ]);
 
+function locDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function isMarketDay(d) {
   if (d.getDay() === 0 || d.getDay() === 6) return false;
-  return !HOLIDAYS.has(d.toISOString().slice(0,10));
+  return !HOLIDAYS.has(locDate(d));
 }
 
 function getDays() {
@@ -265,7 +272,7 @@ function genPrices(days, start, drift, vol) {
   for (const day of days) {
     const r = drift/252 + (Math.random()-0.5)*vol/Math.sqrt(252)*2;
     prev = Math.round(prev * (1 + r));
-    p[day.toISOString().slice(0,10)] = prev;
+    p[locDate(day)] = prev;
   }
   return p;
 }
@@ -318,27 +325,26 @@ function genTime() {
 }
 
 function fmt(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2)}
-function iso(d){return d.toISOString().slice(0,10)}
 
 function getProgress(isoStr) {
   return Math.min((parseInt(isoStr.slice(5,7)) - 1) / 5, 1.0);
 }
 
 // Generate & cache
-const DATA_VER = 2;
+const DATA_VER = 3;
 
 function genTrades() {
   try {
     const ver = parseInt(localStorage.getItem('tm_perf_ver') || '0');
     const cd = localStorage.getItem('tm_perf_date');
-    const t = iso(new Date());
+    const t = locDate(new Date());
     if (ver >= DATA_VER && cd === t) return JSON.parse(localStorage.getItem('tm_perf_trades'));
   } catch(e) {}
 
   const trades = [];
   let id = 1;
   for (const day of allDays) {
-    const k = iso(day), prog = getProgress(k);
+    const k = locDate(day), prog = getProgress(k);
     const ns = niftyP[k], ss = sensexP[k];
     const n = ri(2,3) + Math.round(prog);
     for (let i = 0; i < n; i++) {
@@ -364,14 +370,14 @@ function genTrades() {
       const exit = Math.round((entry + em) * 100) / 100;
       const pnl = bs === 'BUY' ? Math.round(em * qty * lot) : Math.round(-em * qty * lot);
       const strat = pr(STRATS);
-      trades.push({ id: id++, date: fmt(day), dateISO: iso(day), month: iso(day).slice(0,7),
+      trades.push({ id: id++, date: fmt(day), dateISO: locDate(day), month: locDate(day).slice(0,7),
         symbol: sym, instr: sym+' '+strike+' '+(ce?'CE':'PE'), strike, spot,
         expiry: fmt(exp), type: bs, qty, entry, exit, pnl, strategy: strat,
         entryTime: genTime(), exitTime: genTime(), holding: ri(5,180) });
     }
   }
 
-  try { localStorage.setItem('tm_perf_trades', JSON.stringify(trades)); localStorage.setItem('tm_perf_date', iso(new Date())); localStorage.setItem('tm_perf_ver', String(DATA_VER)); } catch(e) {}
+  try { localStorage.setItem('tm_perf_trades', JSON.stringify(trades)); localStorage.setItem('tm_perf_date', locDate(new Date())); localStorage.setItem('tm_perf_ver', String(DATA_VER)); } catch(e) {}
   return trades;
 }
 
@@ -400,7 +406,7 @@ document.getElementById('heroMetrics').innerHTML = `
 `;
 
 // Subtitle
-document.getElementById('subtitle').textContent = allDays.length + ' trading days · Jan ' + NOW.getFullYear() + ' – ' + iso(NOW).slice(0,7).replace('-',' ');
+document.getElementById('subtitle').textContent = allDays.length + ' trading days · Jan ' + NOW.getFullYear() + ' – ' + locDate(NOW).slice(0,7).replace('-',' ');
 
 // Monthly chart
 function renderChart() {
