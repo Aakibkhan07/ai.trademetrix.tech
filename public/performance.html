@@ -269,7 +269,7 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
       <div class="section-subtitle" id="tradesSubtitle">All trades · Jan 2026 – present</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button id="exportBtn" class="export-btn" onclick="exportToExcel()">⬇ Export Excel</button>
+      <button id="exportBtn" class="export-btn" onclick="exportToSheets()">⬇ Open in Google Sheets</button>
       <div class="filter-bar" id="filterBar"></div>
     </div>
       <select id="filterMonth" class="filter-select"><option value="">All Months</option></select>
@@ -555,6 +555,7 @@ async function init() {
       localStorage.setItem('tm_perf_date', locDate(new Date()));
       localStorage.setItem('tm_perf_ver', String(DATA_VER));
     } catch(e) {}
+    allTrades = trades;
   }
 
   // Hide loader, show content
@@ -572,6 +573,7 @@ document.getElementById('mainContent').style.display = 'block';
 }
 
 const ASSUMED_CAPITAL = 1000000;
+let allTrades = [];
 
 function renderHero(trades, allDates) {
   const totalPnl = trades.reduce((s,t) => s + t.pnl, 0);
@@ -832,64 +834,42 @@ function renderStrategyPnl(trades) {
   }).join('');
 }
 
-function exportToExcel() {
-  const rows = [['#','Date','Symbol','Instrument','Spot','Type','Strike','Qty','Entry','Exit','P&L','Strategy','Entry Time','Exit Time','Holding (min)']];
-  trades.forEach((t, i) => {
-    rows.push([i+1, t.date, t.symbol, t.instr, t.spot, t.type, t.strike, t.qty, t.entry, t.exit, t.pnl, t.strategy, t.entryTime, t.exitTime, t.holding]);
-  });
+function exportToSheets() {
+  if (!allTrades || !allTrades.length) return;
 
-  const totalPnl = trades.reduce((s,t) => s + t.pnl, 0);
-  const wins = trades.filter(t => t.pnl > 0).length;
-  const losses = trades.filter(t => t.pnl < 0).length;
-  const wr = trades.length ? (wins/trades.length*100).toFixed(1) : '0.0';
+  const esc = v => {
+    if (v === null || v === undefined) return '';
+    const s = String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+
+  const t = allTrades;
+  const totalPnl = t.reduce((s,tr) => s + tr.pnl, 0);
+  const wins = t.filter(tr => tr.pnl > 0).length;
+  const losses = t.filter(tr => tr.pnl < 0).length;
+  const wr = t.length ? (wins / t.length * 100).toFixed(1) : '0.0';
   const ret = (totalPnl / ASSUMED_CAPITAL * 100).toFixed(2);
 
-  let xml = '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>';
-  xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"';
-  xml += ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
-  xml += '<Styles><Style ss:ID="header"><Font ss:Bold="1" ss:Color="#EF4444"/><Interior ss:Color="#1a1a1a" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>';
-  xml += '<Style ss:ID="pnlUp"><Font ss:Color="#22C55E"/></Style>';
-  xml += '<Style ss:ID="pnlDown"><Font ss:Color="#EF4444"/></Style>';
-  xml += '<Style ss:ID="num"><NumberFormat ss:Format="#,##0"/></Style>';
-  xml += '<Style ss:ID="pct"><NumberFormat ss:Format="0.0%"/></Style></Styles>';
+  let csv = 'Trade Metrix Tech — Performance Report 2026\n';
+  csv += 'Generated,' + new Date().toLocaleString('en-IN') + '\n';
+  csv += 'Assumed Capital,₹' + ASSUMED_CAPITAL.toLocaleString('en-IN') + '\n';
+  csv += 'Total P&L,₹' + totalPnl.toLocaleString('en-IN') + '\n';
+  csv += 'Return,' + (totalPnl >= 0 ? '+' : '') + ret + '%\n';
+  csv += 'Win Rate,' + wr + '%\n';
+  csv += 'Wins/Losses,' + wins + '/' + losses + '\n';
+  csv += 'Total Trades,' + t.length + '\n';
+  csv += ',,\n';
 
-  xml += '<Worksheet ss:Name="Trades History"><Table>';
-  // Headers
-  xml += '<Row>';
-  rows[0].forEach(h => { xml += '<Cell ss:StyleID="header"><Data ss:Type="String">'+h+'</Data></Cell>'; });
-  xml += '</Row>';
-  // Data
-  for (let i = 1; i < rows.length; i++) {
-    xml += '<Row>';
-    rows[i].forEach((v, ci) => {
-      const isPnl = ci === 10;
-      const style = isPnl ? (v >= 0 ? 'pnlUp' : 'pnlDown') : (ci >= 4 && ci <= 9 ? 'num' : '');
-      const type = typeof v === 'number' ? 'Number' : 'String';
-      xml += '<Cell'+(style?' ss:StyleID="'+style+'"':'')+'><Data ss:Type="'+type+'">'+v+'</Data></Cell>';
-    });
-    xml += '</Row>';
-  }
-  xml += '</Table></Worksheet>';
+  csv += 'Trade ID,Date,Symbol,Instrument,Spot,Type,Strike,Qty,Entry,Exit,P&L,Strategy,Entry Time,Exit Time,Holding (min)\n';
+  t.forEach((tr, i) => {
+    csv += [i+1, tr.date, tr.symbol, tr.instr, tr.spot, tr.type, tr.strike, tr.qty, tr.entry, tr.exit, tr.pnl, tr.strategy, tr.entryTime, tr.exitTime, tr.holding].map(esc).join(',') + '\n';
+  });
 
-  // Summary sheet
-  xml += '<Worksheet ss:Name="Summary"><Table>';
-  xml += '<Row><Cell ss:StyleID="header"><Data ss:Type="String">Metric</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Value</Data></Cell></Row>';
-  xml += '<Row><Cell><Data ss:Type="String">Total Trades</Data></Cell><Cell><Data ss:Type="Number">'+trades.length+'</Data></Cell></Row>';
-  xml += '<Row><Cell><Data ss:Type="String">Wins</Data></Cell><Cell><Data ss:Type="Number">'+wins+'</Data></Cell></Row>';
-  xml += '<Row><Cell><Data ss:Type="String">Losses</Data></Cell><Cell><Data ss:Type="Number">'+losses+'</Data></Cell></Row>';
-  xml += '<Row><Cell><Data ss:Type="String">Win Rate</Data></Cell><Cell><Data ss:Type="Number">'+wr+'</Data></Cell></Row>';
-  xml += '<Row><Cell><Data ss:Type="String">Total P&L</Data></Cell><Cell ss:StyleID="'+(totalPnl>=0?'pnlUp':'pnlDown')+'"><Data ss:Type="Number">'+totalPnl+'</Data></Cell></Row>';
-  xml += '<Row><Cell><Data ss:Type="String">Assumed Capital</Data></Cell><Cell><Data ss:Type="Number">'+ASSUMED_CAPITAL+'</Data></Cell></Row>';
-  xml += '<Row><Cell><Data ss:Type="String">Return on Capital</Data></Cell><Cell ss:StyleID="'+(totalPnl>=0?'pnlUp':'pnlDown')+'"><Data ss:Type="Number">'+ret+'</Data></Cell></Row>';
-  xml += '<Row><Cell><Data ss:Type="String">Nifty Trades</Data></Cell><Cell><Data ss:Type="Number">'+trades.filter(t=>t.symbol==='NIFTY').length+'</Data></Cell></Row>';
-  xml += '<Row><Cell><Data ss:Type="String">Sensex Trades</Data></Cell><Cell><Data ss:Type="Number">'+trades.filter(t=>t.symbol==='SENSEX').length+'</Data></Cell></Row>';
-  xml += '</Table></Worksheet></Workbook>';
-
-  const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'trade_metrix_performance_2026.xls';
+  a.download = 'trade_metrix_performance_2026.csv';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
