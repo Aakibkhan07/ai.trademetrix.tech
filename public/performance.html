@@ -367,15 +367,23 @@ function pr(a){return a[Math.floor(Math.random()*a.length)]}
 
 function calcPremium(spot, strike, isCE, dte) {
   const diff = isCE ? spot - strike : strike - spot;
-  const moneyness = diff / spot;
-  const timeVal = 0.006 + dte * 0.0006;
+  const absM = Math.abs(diff) / spot;
+  const atmPct = Math.min(0.018, 0.0018 + dte * 0.00035);
+  const atmP = spot * atmPct;
   let p;
-  if (moneyness > 0.03) p = Math.abs(diff) + spot * timeVal * 0.2;
-  else if (moneyness > 0.01) p = Math.abs(diff) + spot * timeVal * 0.4;
-  else if (moneyness > -0.01) p = spot * timeVal * (1 + Math.random() * 0.3);
-  else if (moneyness > -0.03) p = spot * timeVal * Math.max(1 - Math.abs(moneyness) * 15, 0.12);
-  else p = spot * timeVal * Math.max(1 - Math.abs(moneyness) * 10, 0.02);
-  return Math.round(p * rf(0.85, 1.10));
+  if (absM < 0.005) {
+    p = atmP * (0.7 + Math.random() * 0.6);
+  } else if (absM < 0.015) {
+    if (diff > 0) p = Math.abs(diff) * 0.45 + atmP * 0.35;
+    else p = atmP * Math.exp(-absM * 70) * (0.7 + Math.random() * 0.6);
+  } else if (absM < 0.03) {
+    if (diff > 0) p = Math.abs(diff) * 0.65 + atmP * 0.2;
+    else p = atmP * Math.exp(-absM * 90) * (0.5 + Math.random());
+  } else {
+    if (diff > 0) p = Math.abs(diff) * 0.85 + atmP * 0.1;
+    else p = atmP * Math.exp(-absM * 130) * (0.5 + Math.random());
+  }
+  return Math.max(2, Math.round(p));
 }
 
 function genExpiry(d) {
@@ -445,7 +453,7 @@ async function init() {
   allDates.sort();
 
   // Generate trades using real prices
-  const DATA_VER = 7;
+  const DATA_VER = 8;
   let trades;
   try {
     const ver = parseInt(localStorage.getItem('tm_perf_ver') || '0');
