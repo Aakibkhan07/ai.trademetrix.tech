@@ -37,17 +37,54 @@ async function fetchYahoo(symbol: string, start: number, end: number) {
   return series;
 }
 
+async function fetchNSEOptions() {
+  try {
+    const home = await fetch('https://www.nseindia.com', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+    });
+    const cookies = home.headers.getSetCookie?.() || [];
+    const cookieStr = cookies.map((c: string) => c.split(';')[0]).join('; ');
+    if (!cookieStr) return null;
+
+    const res = await fetch('https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Cookie': cookieStr,
+        'Referer': 'https://www.nseindia.com/',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.records?.strikePrices) return null;
+    return {
+      niftyStrikes: data.records.strikePrices,
+      underlying: data.records.underlyingValue,
+      expiry: data.records.expiryDates?.[0] || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function GET() {
   try {
     const now = new Date();
     const { start, end } = getUnixDays(now.getFullYear());
 
-    const [nifty, sensex] = await Promise.all([
+    const [nifty, sensex, nse] = await Promise.all([
       fetchYahoo(NIFTY_SYMBOL, start, end),
       fetchYahoo(SENSEX_SYMBOL, start, end),
+      fetchNSEOptions(),
     ]);
 
-    return NextResponse.json({ nifty, sensex, generatedAt: now.toISOString() });
+    return NextResponse.json({
+      nifty,
+      sensex,
+      nse: nse || null,
+      generatedAt: now.toISOString(),
+    });
   } catch (err) {
     console.error('Market data fetch failed:', err);
     return NextResponse.json({ error: 'Failed to fetch market data' }, { status: 502 });

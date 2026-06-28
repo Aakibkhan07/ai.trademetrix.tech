@@ -151,6 +151,20 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
 .auto-title { font-size:13px; font-weight:600; margin-bottom:4px; }
 .auto-desc { font-size:10px; color:var(--text-muted); line-height:1.5; }
 
+/* Trades History */
+.trades-card { padding:12px 16px 16px; }
+.filter-bar { display:flex; gap:8px; flex-wrap:wrap; }
+.filter-select { background:var(--card); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:11px; padding:6px 10px; font-family:var(--font); cursor:pointer; outline:none; min-width:110px; }
+.filter-select:hover { border-color:var(--border-hover); }
+.filter-select:focus { border-color:var(--accent); }
+.trades-table thead th { position:sticky; top:0; background:var(--card); z-index:2; }
+.trades-table tbody td { font-family:var(--mono); font-size:11px; }
+.trades-footer { display:flex; justify-content:space-between; align-items:center; padding:10px 4px 2px; font-size:11px; color:var(--text-muted); }
+.trades-pages { display:flex; gap:4px; }
+.page-btn { padding:3px 9px; border-radius:5px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:10px; cursor:pointer; font-family:var(--mono); transition:all 0.15s; }
+.page-btn:hover { border-color:var(--accent); color:var(--accent); }
+.page-btn.active { background:var(--red-bg); border-color:var(--accent); color:var(--accent); font-weight:600; }
+
 /* Disclaimer */
 .disclaimer-card { background:rgba(239,68,68,0.03); border:1px solid rgba(239,68,68,0.15); border-radius:12px; padding:20px; }
 .disclaimer-card .title { font-size:13px; font-weight:600; color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
@@ -245,19 +259,30 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
   <div class="grid-4" id="statsGrid"></div>
 </div>
 
-<div class="section">
+<div class="section" id="tradesSection">
   <div class="section-header">
     <div>
-      <div class="section-title">Recent Trades</div>
-      <div class="section-subtitle">Last 20 trades</div>
+      <div class="section-title">Trades History</div>
+      <div class="section-subtitle" id="tradesSubtitle">All trades · Jan 2026 – present</div>
+    </div>
+    <div class="filter-bar" id="filterBar">
+      <select id="filterMonth" class="filter-select"><option value="">All Months</option></select>
+      <select id="filterStrategy" class="filter-select"><option value="">All Strategies</option></select>
+      <select id="filterSymbol" class="filter-select"><option value="">All Symbols</option></select>
+      <select id="filterType" class="filter-select"><option value="">All Types</option></select>
+      <select id="filterResult" class="filter-select"><option value="">All Results</option></select>
     </div>
   </div>
-  <div class="card">
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Date</th><th>Instrument</th><th>Spot</th><th>Type</th><th>Strike</th><th>Qty</th><th>Entry</th><th>Exit</th><th>P&amp;L</th><th>Strategy</th></tr></thead>
-        <tbody id="recentTable"></tbody>
+  <div class="card trades-card">
+    <div class="table-wrap" id="tradesTableWrap">
+      <table class="trades-table">
+        <thead><tr><th>#</th><th>Date</th><th>Instrument</th><th>Spot</th><th>Type</th><th>Strike</th><th>Qty</th><th>Entry</th><th>Exit</th><th>P&amp;L</th><th>Strategy</th></tr></thead>
+        <tbody id="tradesTableBody"></tbody>
       </table>
+    </div>
+    <div class="trades-footer" id="tradesFooter">
+      <span id="tradesCount"></span>
+      <div class="trades-pages" id="tradesPages"></div>
     </div>
   </div>
 </div>
@@ -417,13 +442,14 @@ function getStrikesNear(spot, step, count) {
 
 async function init() {
   // Fetch real market data
-  let niftyData = [], sensexData = [];
+  let niftyData = [], sensexData = [], nseData = null;
   try {
     const res = await fetch('/api/market-data');
     if (res.ok) {
       const json = await res.json();
       niftyData = json.nifty || [];
       sensexData = json.sensex || [];
+      nseData = json.nse || null;
     }
   } catch(e) {}
 
@@ -432,6 +458,11 @@ async function init() {
     niftyData = generateFallbackPrices(23650, 0.12, 0.14);
     sensexData = generateFallbackPrices(75600, 0.10, 0.12);
   }
+
+  // Use NSE strikePrices if available, otherwise use standard intervals
+  const NIFTY_STRIKES = nseData?.niftyStrikes || null;
+  const NIFTY_STEP = NIFTY_STRIKES ? NIFTY_STRIKES[1] - NIFTY_STRIKES[0] : 50;
+  const SENSEX_STEP = 100;
 
   // Build price lookup by date
   const niftyPrices = {};
@@ -477,10 +508,15 @@ async function init() {
         const isN = Math.random() < 0.52;
         const sym = isN ? 'NIFTY' : 'SENSEX';
         const spot = isN ? ns : ss;
-        const step = isN ? 50 : 100;
-        const count = isN ? 14 : 12;
-        const strikes = getStrikesNear(spot, step, count);
-        const strike = pr(strikes);
+        let strike;
+        if (isN && NIFTY_STRIKES) {
+          const valid = NIFTY_STRIKES.filter(s => s >= spot * 0.88 && s <= spot * 1.12);
+          strike = valid.length ? pr(valid) : getStrikesNear(spot, NIFTY_STEP, 14)[Math.floor(Math.random()*29)];
+        } else {
+          const step = isN ? NIFTY_STEP : SENSEX_STEP;
+          const count = isN ? 14 : 12;
+          strike = pr(getStrikesNear(spot, step, count));
+        }
 
         const exp = genExpiry(new Date(dateStr));
         const dte = Math.ceil((exp - new Date(dateStr)) / 86400000);
@@ -525,7 +561,7 @@ document.getElementById('mainContent').style.display = 'block';
   renderChart(trades);
   renderStrategyCards(trades);
   renderStats(trades);
-  renderRecentTrades(trades);
+  renderTradesHistory(trades);
   renderStrategyPnl(trades);
 }
 
@@ -637,20 +673,117 @@ function renderStats(trades) {
   `;
 }
 
-function renderRecentTrades(trades) {
-  const recent = trades.slice(-20).reverse();
-  document.getElementById('recentTable').innerHTML = recent.map(t => {
-    const isN = t.symbol === 'NIFTY';
-    const tc = isN ? 'ticker-nifty' : 'ticker-sensex';
-    const tb = t.type === 'BUY' ? 'badge-buy' : 'badge-sell';
-    const pc = t.pnl >= 0 ? 'pnl-up' : 'pnl-down';
-    const pp = t.pnl >= 0 ? '+' : '';
-    return '<tr><td>'+t.date+'</td><td class="'+tc+'">'+t.instr+'</td><td style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">'+t.spot.toLocaleString('en-IN')+'</td>'
-      + '<td><span class="badge-type '+tb+'">'+t.type+'</span></td><td style="font-family:var(--mono)">'+t.strike.toLocaleString('en-IN')+'</td>'
-      + '<td>'+t.qty+'</td><td>₹'+t.entry+'</td><td>₹'+t.exit+'</td>'
-      + '<td class="'+pc+'">'+pp+'₹'+Math.abs(t.pnl).toLocaleString('en-IN')+'</td>'
-      + '<td><span class="strategy-badge">'+t.strategy+'</span></td></tr>';
-  }).join('');
+function renderTradesHistory(trades) {
+  const PAGE_SIZE = 50;
+  let currentPage = 1;
+  let filteredTrades = [...trades];
+
+  // Populate filters
+  const months = [...new Set(trades.map(t => t.dateISO.slice(0,7)))].sort().reverse();
+  const strategies = [...new Set(trades.map(t => t.strategy))];
+  const symbols = [...new Set(trades.map(t => t.symbol))];
+
+  const monthSel = document.getElementById('filterMonth');
+  months.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    const d = new Date(m + '-01');
+    opt.textContent = d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    monthSel.appendChild(opt);
+  });
+
+  const stratSel = document.getElementById('filterStrategy');
+  strategies.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    stratSel.appendChild(opt);
+  });
+
+  const symSel = document.getElementById('filterSymbol');
+  symbols.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    symSel.appendChild(opt);
+  });
+
+  function filterTrades() {
+    const fm = monthSel.value;
+    const fs = stratSel.value;
+    const fy = symSel.value;
+    const ft = document.getElementById('filterType').value;
+    const fr = document.getElementById('filterResult').value;
+
+    filteredTrades = trades.filter(t => {
+      if (fm && t.dateISO.slice(0,7) !== fm) return false;
+      if (fs && t.strategy !== fs) return false;
+      if (fy && t.symbol !== fy) return false;
+      if (ft && t.type !== ft) return false;
+      if (fr === 'win' && t.pnl <= 0) return false;
+      if (fr === 'loss' && t.pnl >= 0) return false;
+      return true;
+    });
+
+    currentPage = 1;
+    renderPage();
+  }
+
+  function renderPage() {
+    const totalPages = Math.max(1, Math.ceil(filteredTrades.length / PAGE_SIZE));
+    currentPage = Math.min(currentPage, totalPages);
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const page = filteredTrades.slice(start, start + PAGE_SIZE);
+
+    const tbody = document.getElementById('tradesTableBody');
+    tbody.innerHTML = page.map((t, i) => {
+      const isN = t.symbol === 'NIFTY';
+      const tc = isN ? 'ticker-nifty' : 'ticker-sensex';
+      const tb = t.type === 'BUY' ? 'badge-buy' : 'badge-sell';
+      const pc = t.pnl >= 0 ? 'pnl-up' : 'pnl-down';
+      const pp = t.pnl >= 0 ? '+' : '';
+      return '<tr><td style="color:var(--text-muted)">'+(start+i+1)+'</td><td>'+t.date+'</td><td class="'+tc+'">'+t.instr+'</td>'
+        + '<td style="color:var(--text-muted)">'+t.spot.toLocaleString('en-IN')+'</td>'
+        + '<td><span class="badge-type '+tb+'">'+t.type+'</span></td>'
+        + '<td>'+t.strike.toLocaleString('en-IN')+'</td><td>'+t.qty+'</td>'
+        + '<td>₹'+t.entry+'</td><td>₹'+t.exit+'</td>'
+        + '<td class="'+pc+'">'+pp+'₹'+Math.abs(t.pnl).toLocaleString('en-IN')+'</td>'
+        + '<td><span class="strategy-badge">'+t.strategy+'</span></td></tr>';
+    }).join('');
+
+    document.getElementById('tradesCount').textContent = filteredTrades.length + ' trades';
+
+    // Pagination
+    const pagesEl = document.getElementById('tradesPages');
+    if (totalPages <= 1) { pagesEl.innerHTML = ''; return; }
+
+    let phtml = '';
+    if (currentPage > 1) phtml += '<button class="page-btn" data-page="'+(currentPage-1)+'">‹</button>';
+    const startP = Math.max(1, currentPage - 2);
+    const endP = Math.min(totalPages, currentPage + 2);
+    for (let p = startP; p <= endP; p++) {
+      phtml += '<button class="page-btn'+(p===currentPage?' active':'')+'" data-page="'+p+'">'+p+'</button>';
+    }
+    if (currentPage < totalPages) phtml += '<button class="page-btn" data-page="'+(currentPage+1)+'">›</button>';
+    pagesEl.innerHTML = phtml;
+
+    pagesEl.querySelectorAll('.page-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentPage = parseInt(btn.dataset.page);
+        renderPage();
+        document.getElementById('tradesTableWrap').scrollTop = 0;
+      });
+    });
+  }
+
+  // Attach filter events
+  document.querySelectorAll('#filterBar select').forEach(sel => {
+    sel.addEventListener('change', filterTrades);
+  });
+
+  document.getElementById('tradesSubtitle').textContent = trades.length + ' total trades · Jan 2026 – present';
+  filterTrades();
 }
 
 function renderStrategyPnl(trades) {
