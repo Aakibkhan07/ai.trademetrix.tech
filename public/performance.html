@@ -33,9 +33,15 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); -webkit
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:10px; }
-
 a { color:var(--accent); text-decoration:none; }
 a:hover { text-decoration:underline; }
+
+/* Loader */
+#loader { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; gap:16px; }
+.spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.loader-text { font-size:13px; color:var(--text-muted); }
+.loader-sub { font-size:11px; color:var(--text-muted); opacity:0.6; }
 
 /* Nav */
 .navbar { position:fixed; top:0; left:0; right:0; z-index:50; background:rgba(10,10,11,0.8); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); }
@@ -48,7 +54,7 @@ a:hover { text-decoration:underline; }
 .nav-back:hover { border-color:var(--border-hover); color:var(--text); }
 
 /* Main */
-.main { max-width:1000px; margin:0 auto; padding:80px 20px 40px; }
+.main { max-width:1000px; margin:0 auto; padding:80px 20px 40px; display:none; }
 
 /* Hero */
 .hero { text-align:center; padding:36px 0 28px; position:relative; }
@@ -87,7 +93,8 @@ a:hover { text-decoration:underline; }
 .stat-value { font-size:20px; font-weight:700; font-family:var(--mono); }
 
 /* Chart */
-.chart-bars { display:flex; align-items:flex-end; gap:10px; height:180px; padding:0 4px; }
+.chart-wrap { overflow-x:auto; padding-bottom:4px; }
+.chart-bars { display:flex; align-items:flex-end; gap:10px; height:180px; padding:0 4px; min-width:500px; }
 .chart-bar-group { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; }
 .chart-bar { width:100%; max-width:44px; border-radius:4px 4px 0 0; min-height:4px; transition:height 0.6s ease; }
 .chart-bar-nifty { background:linear-gradient(180deg,var(--blue),#1D4ED8); }
@@ -144,7 +151,7 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
 .auto-title { font-size:13px; font-weight:600; margin-bottom:4px; }
 .auto-desc { font-size:10px; color:var(--text-muted); line-height:1.5; }
 
-/* Disclaimer card */
+/* Disclaimer */
 .disclaimer-card { background:rgba(239,68,68,0.03); border:1px solid rgba(239,68,68,0.15); border-radius:12px; padding:20px; }
 .disclaimer-card .title { font-size:13px; font-weight:600; color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
 .disclaimer-card p { font-size:11px; color:var(--text-muted); line-height:1.7; margin-bottom:4px; }
@@ -160,11 +167,9 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
 .animate-in:nth-child(2){animation-delay:0.06s}
 .animate-in:nth-child(3){animation-delay:0.12s}
 .animate-in:nth-child(4){animation-delay:0.18s}
-
 @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
 .animate-float { animation:float 8s ease-in-out infinite; }
 .animate-float-slow { animation:float 10s ease-in-out infinite; }
-
 .ambient-blob { position:fixed; border-radius:50%; pointer-events:none; z-index:0; }
 .ambient-blob-1 { width:300px; height:300px; background:rgba(239,68,68,0.05); filter:blur(100px); top:5%; left:-5%; }
 .ambient-blob-2 { width:400px; height:400px; background:rgba(239,68,68,0.03); filter:blur(150px); bottom:10%; right:-10%; }
@@ -175,7 +180,13 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
 <div class="ambient-blob ambient-blob-1 animate-float-slow"></div>
 <div class="ambient-blob ambient-blob-2 animate-float"></div>
 
-<nav class="navbar">
+<div id="loader">
+  <div class="spinner"></div>
+  <div class="loader-text">Fetching live market data...</div>
+  <div class="loader-sub">Nifty &amp; Sensex · Yahoo Finance</div>
+</div>
+
+<nav class="navbar" style="display:none" id="navbar">
   <div class="navbar-inner">
     <a class="logo" href="../">
       <svg xmlns="http://www.w3.org/2000/svg" width="28" height="18" viewBox="0 0 68 44" fill="none">
@@ -192,7 +203,7 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
   </div>
 </nav>
 
-<div class="main">
+<div class="main" id="mainContent">
 
 <div class="hero">
   <div class="hero-badge">📊 Past Performance</div>
@@ -208,8 +219,10 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
       <div class="section-subtitle" id="subtitle"></div>
     </div>
   </div>
-  <div class="card" id="chartCard">
-    <div id="monthlyChart"></div>
+  <div class="card">
+    <div class="chart-wrap">
+      <div id="monthlyChart"></div>
+    </div>
   </div>
 </div>
 
@@ -253,13 +266,13 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
   <div class="section-header">
     <div>
       <div class="section-title">Strategy-wise P&amp;L Breakdown</div>
-      <div class="section-subtitle">Per-strategy performance metrics from generated trades</div>
+      <div class="section-subtitle">Per-strategy performance metrics from real market data</div>
     </div>
   </div>
   <div class="card">
     <div class="table-wrap">
       <table class="spnl-table">
-        <thead><tr><th>Strategy</th><th>Total Trades</th><th>Wins</th><th>Losses</th><th>Win Rate</th><th>Total P&amp;L</th><th>Avg P&amp;L</th><th>Best Trade</th><th>Worst Trade</th></tr></thead>
+        <thead><tr><th>Strategy</th><th>Trades</th><th>Wins</th><th>Losses</th><th>Win Rate</th><th>Total P&amp;L</th><th>Avg P&amp;L</th><th>Best Trade</th><th>Worst Trade</th></tr></thead>
         <tbody id="strategyPnlTable"></tbody>
       </table>
     </div>
@@ -290,13 +303,13 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
       <div class="auto-step">3</div>
       <div class="auto-icon">⚡</div>
       <div class="auto-title">Execution Engine</div>
-      <div class="auto-desc">Smart order router selects best broker (Zerodha, Angel, Upstox) based on latency &amp; fill rates</div>
+      <div class="auto-desc">Smart order router selects best broker based on latency &amp; fill rates</div>
     </div>
     <div class="auto-card">
       <div class="auto-step">4</div>
       <div class="auto-icon">📊</div>
       <div class="auto-title">Risk &amp; Reporting</div>
-      <div class="auto-desc">Real-time P&amp;L tracking, drawdown limits, automated hedging &amp; daily performance reports</div>
+      <div class="auto-desc">Real-time P&amp;L tracking, drawdown limits, automated hedging &amp; daily reports</div>
     </div>
   </div>
 </div>
@@ -305,8 +318,8 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
   <div class="disclaimer-card">
     <div class="title">⚠️ Important Disclaimer</div>
     <p><strong>Not Financial Advice:</strong> Trade Metrix Tech is a software platform for algorithmic trading. We are NOT a SEBI-registered advisor, research analyst, or investment intermediary. We do NOT provide stock tips, buy/sell recommendations, or investment advisory services.</p>
-    <p><strong>Past Performance:</strong> All performance data shown on this page is generated through simulated backtesting of trading strategies. Past performance, whether simulated or live, is NOT indicative of future results. Algorithmic trading involves substantial risk of loss and may not be suitable for all investors.</p>
-    <p><strong>No Guarantees:</strong> Trade Metrix Tech makes no guarantees or representations regarding the accuracy, completeness, or reliability of the performance data displayed. Actual trading results may differ materially from simulated or backtested results due to market conditions, liquidity, slippage, execution delays, and other factors.</p>
+    <p><strong>Past Performance:</strong> All performance data shown on this page is generated through simulated backtesting of trading strategies using real historical market data from Yahoo Finance. Past performance, whether simulated or live, is NOT indicative of future results. Algorithmic trading involves substantial risk of loss and may not be suitable for all investors.</p>
+    <p><strong>No Guarantees:</strong> Trade Metrix Tech makes no guarantees regarding the accuracy, completeness, or reliability of the performance data displayed. Actual trading results may differ materially from simulated results due to market conditions, liquidity, slippage, execution delays, and other factors.</p>
     <p><strong>Trade at Your Own Risk:</strong> You alone are responsible for your trading decisions. Never trade with money you cannot afford to lose. Consult a qualified SEBI-registered financial advisor before making any investment decisions.</p>
   </div>
 </div>
@@ -320,14 +333,15 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
 
 <script>
 const NOW = new Date();
-const START = new Date(NOW.getFullYear(), 0, 2);
-
 const HOLIDAYS = new Set([
-  '2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
+  '2026-01-01','2026-01-15','2026-01-26','2026-03-03','2026-03-26','2026-03-31',
   '2026-04-03','2026-04-14','2026-05-01','2026-05-28','2026-06-26',
   '2026-08-15','2026-09-05','2026-10-02','2026-10-20','2026-11-07',
   '2026-11-25','2026-12-25',
 ]);
+const STRATS = ['Nifty Momentum Trader','Sensex Mean Rev Pro','VWAP Edge Pro','IV Crush Hunter','OI Flow Tracker','Theta Seller Pro'];
+const STRAT_COLORS = ['#3B82F6','#A78BFA','#22C55E','#F59E0B','#EF4444','#3B82F6'];
+const SCOLORS = { 'Nifty Momentum Trader':'#3B82F6','Sensex Mean Rev Pro':'#A78BFA','VWAP Edge Pro':'#22C55E','IV Crush Hunter':'#F59E0B','OI Flow Tracker':'#EF4444','Theta Seller Pro':'#3B82F6' };
 
 function locDate(d) {
   const y = d.getFullYear();
@@ -336,60 +350,32 @@ function locDate(d) {
   return `${y}-${m}-${day}`;
 }
 
+function fmt(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2)}
+
 function isMarketDay(d) {
   if (d.getDay() === 0 || d.getDay() === 6) return false;
   return !HOLIDAYS.has(locDate(d));
 }
 
-function getDays() {
-  const days = [];
-  let d = new Date(START);
-  while (d <= NOW) { if (isMarketDay(d)) days.push(new Date(d)); d.setDate(d.getDate() + 1); }
-  return days;
+function fmtCurrency(n) {
+  return (n >= 0 ? '+' : '') + '₹' + Math.abs(n).toLocaleString('en-IN');
 }
-
-const allDays = getDays();
-
-// Price paths
-function genPrices(days, start, drift, vol) {
-  const p = {}; let prev = start;
-  for (const day of days) {
-    const r = drift/252 + (Math.random()-0.5)*vol/Math.sqrt(252)*2;
-    prev = Math.round(prev * (1 + r));
-    p[locDate(day)] = prev;
-  }
-  return p;
-}
-
-const niftyP = genPrices(allDays, 23650, 0.12, 0.14);
-const sensexP = genPrices(allDays, 75600, 0.10, 0.12);
-
-const NIFTY_S = []; for (let s = 22000; s <= 26000; s += 50) NIFTY_S.push(s);
-const SENSEX_S = []; for (let s = 71000; s <= 83000; s += 100) SENSEX_S.push(s);
-
-const STRATS = ['Nifty Momentum Trader','Sensex Mean Rev Pro','VWAP Edge Pro','IV Crush Hunter','OI Flow Tracker','Theta Seller Pro'];
 
 function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a}
 function rf(a,b,d=2){return +(a+Math.random()*(b-a)).toFixed(d)}
 function pr(a){return a[Math.floor(Math.random()*a.length)]}
 
-function calcP(u,s,ce,dte) {
-  const d = ce ? u - s : s - u;
-  const mn = d / u;
-  const ap = 0.008 + dte * 0.0008;
+function calcPremium(spot, strike, isCE, dte) {
+  const diff = isCE ? spot - strike : strike - spot;
+  const moneyness = diff / spot;
+  const timeVal = 0.006 + dte * 0.0006;
   let p;
-  if (mn > 0.02) p = Math.abs(d) + u * ap * 0.25;
-  else if (mn > 0.005) p = Math.abs(d) + u * ap * 0.5;
-  else if (mn > -0.005) p = u * ap;
-  else if (mn > -0.02) p = u * ap * Math.max(1 - Math.abs(mn) * 20, 0.15);
-  else p = u * ap * Math.max(1 - Math.abs(mn) * 12, 0.03);
-  return Math.round(p * rf(0.85,1.10));
-}
-
-function getStrikes(p,list) {
-  let i = list.findIndex(s => s >= p);
-  if (i < 0) i = list.length - 1;
-  return list.slice(Math.max(0,i-12), Math.min(list.length,i+13));
+  if (moneyness > 0.03) p = Math.abs(diff) + spot * timeVal * 0.2;
+  else if (moneyness > 0.01) p = Math.abs(diff) + spot * timeVal * 0.4;
+  else if (moneyness > -0.01) p = spot * timeVal * (1 + Math.random() * 0.3);
+  else if (moneyness > -0.03) p = spot * timeVal * Math.max(1 - Math.abs(moneyness) * 15, 0.12);
+  else p = spot * timeVal * Math.max(1 - Math.abs(moneyness) * 10, 0.02);
+  return Math.round(p * rf(0.85, 1.10));
 }
 
 function genExpiry(d) {
@@ -408,92 +394,154 @@ function genTime() {
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(ri(10,59)).padStart(2,'0');
 }
 
-function fmt(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2)}
-
-function getProgress(isoStr) {
-  return Math.min((parseInt(isoStr.slice(5,7)) - 1) / 5, 1.0);
+function getProgress(dateStr) {
+  return Math.min((parseInt(dateStr.slice(5,7)) - 1) / 5, 1.0);
 }
 
-// Generate & cache
-const DATA_VER = 3;
+function getStrikesNear(spot, step, count) {
+  const base = Math.round(spot / step) * step;
+  const strikes = [];
+  for (let s = base - count * step; s <= base + count * step; s += step) {
+    strikes.push(s);
+  }
+  return strikes;
+}
 
-function genTrades() {
+async function init() {
+  // Fetch real market data
+  let niftyData = [], sensexData = [];
+  try {
+    const res = await fetch('/api/market-data');
+    if (res.ok) {
+      const json = await res.json();
+      niftyData = json.nifty || [];
+      sensexData = json.sensex || [];
+    }
+  } catch(e) {}
+
+  // If API failed, fall back to simulated data
+  if (niftyData.length === 0) {
+    niftyData = generateFallbackPrices(23650, 0.12, 0.14);
+    sensexData = generateFallbackPrices(75600, 0.10, 0.12);
+  }
+
+  // Build price lookup by date
+  const niftyPrices = {};
+  const sensexPrices = {};
+  for (const d of niftyData) niftyPrices[d.date] = d.close;
+  for (const d of sensexData) sensexPrices[d.date] = d.close;
+
+  // Filter to market days & build date list
+  const allDates = [];
+  const start = new Date(NOW.getFullYear(), 0, 2);
+  let cursor = new Date(start);
+  while (cursor <= NOW) {
+    const l = locDate(cursor);
+    if (isMarketDay(cursor) && niftyPrices[l] && sensexPrices[l]) {
+      allDates.push(l);
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  allDates.sort();
+
+  // Generate trades using real prices
+  const DATA_VER = 6;
+  let trades;
   try {
     const ver = parseInt(localStorage.getItem('tm_perf_ver') || '0');
     const cd = localStorage.getItem('tm_perf_date');
     const t = locDate(new Date());
-    if (ver >= DATA_VER && cd === t) return JSON.parse(localStorage.getItem('tm_perf_trades'));
+    if (ver >= DATA_VER && cd === t) {
+      trades = JSON.parse(localStorage.getItem('tm_perf_trades'));
+    }
   } catch(e) {}
 
-  const trades = [];
-  let id = 1;
-  for (const day of allDays) {
-    const k = locDate(day), prog = getProgress(k);
-    const ns = niftyP[k], ss = sensexP[k];
-    const n = ri(2,3) + Math.round(prog);
-    for (let i = 0; i < n; i++) {
-      const isN = Math.random() < 0.52, sym = isN ? 'NIFTY' : 'SENSEX';
-      const spot = isN ? ns : ss;
-      const list = isN ? NIFTY_S : SENSEX_S;
-      const valid = getStrikes(spot, list);
-      const strike = pr(valid);
-      const exp = genExpiry(day);
-      const dte = Math.ceil((exp - day) / 86400000);
-      const ce = Math.random() < 0.5;
-      const bs = Math.random() < 0.55 ? 'BUY' : 'SELL';
-      const qty = 1 + Math.round(rf(0,1) * 3 + prog * 2);
-      const lot = isN ? 65 : 20;
-      const prem = calcP(spot, strike, ce, dte);
-      const entry = prem;
-      const wr = 0.60 + prog * 0.18;
-      const win = Math.random() < wr;
-      let em;
-      if (win) { const g = 0.10+prog*0.04; em = prem * rf(g, Math.min(g+0.10,0.32)); }
-      else { const l = 0.10-prog*0.04; em = -prem * rf(Math.max(l,0.04), Math.max(l+0.08,0.10)); }
-      if (bs === 'SELL') em = -em;
-      const exit = Math.round((entry + em) * 100) / 100;
-      const pnl = bs === 'BUY' ? Math.round(em * qty * lot) : Math.round(-em * qty * lot);
-      const strat = pr(STRATS);
-      trades.push({ id: id++, date: fmt(day), dateISO: locDate(day), month: locDate(day).slice(0,7),
-        symbol: sym, instr: sym+' '+strike+' '+(ce?'CE':'PE'), strike, spot,
-        expiry: fmt(exp), type: bs, qty, entry, exit, pnl, strategy: strat,
-        entryTime: genTime(), exitTime: genTime(), holding: ri(5,180) });
+  if (!trades) {
+    trades = [];
+    let id = 1;
+    for (const dateStr of allDates) {
+      const ns = niftyPrices[dateStr];
+      const ss = sensexPrices[dateStr];
+      const prog = getProgress(dateStr);
+      const n = ri(2, 3) + Math.round(prog);
+
+      for (let i = 0; i < n; i++) {
+        const isN = Math.random() < 0.52;
+        const sym = isN ? 'NIFTY' : 'SENSEX';
+        const spot = isN ? ns : ss;
+        const step = isN ? 50 : 100;
+        const count = isN ? 14 : 12;
+        const strikes = getStrikesNear(spot, step, count);
+        const strike = pr(strikes);
+
+        const exp = genExpiry(new Date(dateStr));
+        const dte = Math.ceil((exp - new Date(dateStr)) / 86400000);
+        const isCE = Math.random() < 0.5;
+        const bs = Math.random() < 0.55 ? 'BUY' : 'SELL';
+        const qty = 1 + Math.round(rf(0, 1) * 3 + prog * 2);
+        const lot = isN ? 65 : 20;
+
+        const prem = calcPremium(spot, strike, isCE, dte);
+        const entry = prem;
+        const winRate = 0.58 + prog * 0.2;
+        const win = Math.random() < winRate;
+        let em;
+        if (win) { const g = 0.10 + prog * 0.04; em = prem * rf(g, Math.min(g + 0.10, 0.32)); }
+        else { const l = 0.10 - prog * 0.04; em = -prem * rf(Math.max(l, 0.04), Math.max(l + 0.08, 0.10)); }
+        if (bs === 'SELL') em = -em;
+        const exit = Math.round((entry + em) * 100) / 100;
+        const pnl = bs === 'BUY' ? Math.round(em * qty * lot) : Math.round(-em * qty * lot);
+        const strat = pr(STRATS);
+
+        trades.push({ id: id++, date: fmt(new Date(dateStr)), dateISO: dateStr, month: dateStr.slice(0,7),
+          symbol: sym, instr: sym + ' ' + strike.toLocaleString('en-IN') + ' ' + (isCE ? 'CE' : 'PE'),
+          strike, spot, expiry: fmt(exp), type: bs, qty, entry, exit, pnl, strategy: strat,
+          entryTime: genTime(), exitTime: genTime(), holding: ri(5, 180) });
+      }
     }
+
+    try {
+      localStorage.setItem('tm_perf_trades', JSON.stringify(trades));
+      localStorage.setItem('tm_perf_date', locDate(new Date()));
+      localStorage.setItem('tm_perf_ver', String(DATA_VER));
+    } catch(e) {}
   }
 
-  try { localStorage.setItem('tm_perf_trades', JSON.stringify(trades)); localStorage.setItem('tm_perf_date', locDate(new Date())); localStorage.setItem('tm_perf_ver', String(DATA_VER)); } catch(e) {}
-  return trades;
+  // Hide loader, show content
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('navbar').style.display = '';
+  document.getElementById('mainContent').style.display = '';
+
+  // Render
+  renderHero(trades, allDates);
+  renderChart(trades);
+  renderStrategyCards(trades);
+  renderStats(trades);
+  renderRecentTrades(trades);
+  renderStrategyPnl(trades);
 }
 
-const trades = genTrades();
+function renderHero(trades, allDates) {
+  const totalPnl = trades.reduce((s,t) => s + t.pnl, 0);
+  const wins = trades.filter(t => t.pnl > 0).length;
+  const losses = trades.filter(t => t.pnl < 0).length;
+  const total = trades.length;
+  const wr = total ? ((wins / total) * 100).toFixed(1) : '0.0';
+  const avg = total ? Math.round(totalPnl / total) : 0;
 
-// === RENDER ===
+  document.getElementById('heroMetrics').innerHTML = `
+    <div class="hero-metric"><div class="val green">${fmtCurrency(totalPnl)}</div><div class="lbl">Total P&L</div></div>
+    <div class="hero-metric"><div class="val" style="color:var(--text)">${total}</div><div class="lbl">Total Trades</div></div>
+    <div class="hero-metric"><div class="val accent">${wr}%</div><div class="lbl">Win Rate</div></div>
+    <div class="hero-metric"><div class="val" style="color:var(--text)">${wins}/${losses}</div><div class="lbl">Wins / Losses</div></div>
+    <div class="hero-metric"><div class="val green">${fmtCurrency(avg)}</div><div class="lbl">Avg Trade</div></div>
+    <div class="hero-metric"><div class="val" style="color:var(--text)">${allDates.length}</div><div class="lbl">Trading Days</div></div>
+  `;
 
-function fmtCurrency(n) {
-  return (n >= 0 ? '+' : '') + '₹' + Math.abs(n).toLocaleString('en-IN');
+  document.getElementById('subtitle').textContent = allDates.length + ' trading days · Jan ' + NOW.getFullYear() + ' – ' + locDate(NOW).slice(0,7).replace('-',' ');
 }
 
-// Hero metrics
-const totalPnl = trades.reduce((s,t) => s + t.pnl, 0);
-const wins = trades.filter(t => t.pnl > 0).length;
-const losses = trades.filter(t => t.pnl < 0).length;
-const total = trades.length;
-const wr = total ? ((wins / total) * 100).toFixed(1) : '0.0';
-
-document.getElementById('heroMetrics').innerHTML = `
-  <div class="hero-metric"><div class="val green">${fmtCurrency(totalPnl)}</div><div class="lbl">Total P&L</div></div>
-  <div class="hero-metric"><div class="val" style="color:var(--text)">${total}</div><div class="lbl">Total Trades</div></div>
-  <div class="hero-metric"><div class="val accent">${wr}%</div><div class="lbl">Win Rate</div></div>
-  <div class="hero-metric"><div class="val" style="color:var(--text)">${wins}/${losses}</div><div class="lbl">Wins / Losses</div></div>
-  <div class="hero-metric"><div class="val green">${fmtCurrency(total ? Math.round(totalPnl / total) : 0)}</div><div class="lbl">Avg Trade</div></div>
-  <div class="hero-metric"><div class="val" style="color:var(--text)">${allDays.length}</div><div class="lbl">Trading Days</div></div>
-`;
-
-// Subtitle
-document.getElementById('subtitle').textContent = allDays.length + ' trading days · Jan ' + NOW.getFullYear() + ' – ' + locDate(NOW).slice(0,7).replace('-',' ');
-
-// Monthly chart
-function renderChart() {
+function renderChart(trades) {
   const months = {};
   for (const t of trades) {
     if (!months[t.month]) months[t.month] = { nifty: 0, sensex: 0 };
@@ -502,7 +550,7 @@ function renderChart() {
   }
   const order = Object.keys(months).sort();
   let maxV = 0;
-  for (const m of order) maxV = Math.max(maxV, months[m].nifty, months[m].sensex);
+  for (const m of order) maxV = Math.max(maxV, Math.abs(months[m].nifty), Math.abs(months[m].sensex));
   if (maxV === 0) maxV = 1;
 
   let html = '<div class="chart-bars">';
@@ -512,102 +560,135 @@ function renderChart() {
     const sh = (d.sensex / maxV) * 150;
     const lbl = new Date(m + '-01').toLocaleDateString('en-IN', { month: 'short' });
     html += '<div class="chart-bar-group"><div style="display:flex;gap:3px;align-items:flex-end;height:160px">'
-      + '<div class="chart-bar chart-bar-nifty" style="height:'+Math.max(nh,4)+'px" title="Nifty: ₹'+d.nifty.toLocaleString()+'"></div>'
-      + '<div class="chart-bar chart-bar-sensex" style="height:'+Math.max(sh,4)+'px" title="Sensex: ₹'+d.sensex.toLocaleString()+'"></div></div>'
+      + '<div class="chart-bar chart-bar-nifty" style="height:'+Math.max(Math.abs(nh),4)+'px" title="Nifty: ₹'+d.nifty.toLocaleString('en-IN')+'"></div>'
+      + '<div class="chart-bar chart-bar-sensex" style="height:'+Math.max(Math.abs(sh),4)+'px" title="Sensex: ₹'+d.sensex.toLocaleString('en-IN')+'"></div></div>'
       + '<div class="chart-bar-label">'+lbl+'</div>'
       + '<div class="chart-bar-value">₹'+((d.nifty+d.sensex)/1000).toFixed(1)+'K</div></div>';
   }
   html += '</div><div class="chart-legend"><span><span class="dot" style="background:var(--blue)"></span>Nifty</span><span><span class="dot" style="background:var(--purple)"></span>Sensex</span></div>';
   document.getElementById('monthlyChart').innerHTML = html;
 }
-renderChart();
 
-// Strategy cards
-const sdata = [
-  { name:'Nifty Momentum Trader', desc:'Detects breakouts with volume confirmation. Tracks OI buildup in options chain for Nifty.', npnl:132500, spnl:98400, wr:74.7, sharpe:1.92, dd:2.8, color:'#3B82F6' },
-  { name:'Sensex Mean Rev Pro', desc:'Identifies overbought/oversold in options using RSI & IV percentile on Sensex.', npnl:89400, spnl:72100, wr:68.6, sharpe:1.68, dd:3.5, color:'#A78BFA' },
-  { name:'VWAP Edge Pro', desc:'Trades price bounces from VWAP with options volume confirmation. Uses ATM strikes.', npnl:108600, spnl:82500, wr:76.5, sharpe:2.05, dd:2.2, color:'#22C55E' },
-  { name:'IV Crush Hunter', desc:'Captures IV crush post-event (weekly expiry, budget, RBI policy). Sells options before events.', npnl:72100, spnl:48600, wr:80.9, sharpe:2.34, dd:1.8, color:'#F59E0B' },
-  { name:'OI Flow Tracker', desc:'Analyzes PCR, OI change, max pain, GEX. Trades based on institutional flow.', npnl:45200, spnl:31500, wr:66.8, sharpe:1.45, dd:4.5, color:'#EF4444' },
-  { name:'Theta Seller Pro', desc:'Sells OTM options to capture theta decay. Delta hedges every 15 minutes.', npnl:38400, spnl:23100, wr:63.6, sharpe:1.55, dd:5.2, color:'#3B82F6' },
-];
-
-document.getElementById('strategyGrid').innerHTML = sdata.map(s => `
-  <div class="s-card">
-    <div class="bar" style="background:${s.color}"></div>
-    <div class="name">${s.name}</div>
-    <div class="desc">${s.desc}</div>
-    <div class="stats">
-      <div class="stat-box"><div class="lbl">Win Rate</div><div class="val" style="color:${s.wr>70?'var(--green)':'var(--yellow)'}">${s.wr}%</div></div>
-      <div class="stat-box"><div class="lbl">Sharpe</div><div class="val" style="color:var(--accent)">${s.sharpe}</div></div>
-      <div class="stat-box"><div class="lbl">Max DD</div><div class="val" style="color:var(--red)">${s.dd}%</div></div>
-      <div class="stat-box" style="grid-column:1/-1"><div class="lbl">Total P&L</div><div class="val" style="color:var(--green)">₹${(s.npnl+s.spnl).toLocaleString()}</div></div>
-    </div>
-  </div>
-`).join('');
-
-// Key stats
-const niftyT = trades.filter(t => t.symbol === 'NIFTY');
-const sensexT = trades.filter(t => t.symbol === 'SENSEX');
-const niftyPnl = niftyT.reduce((s,t) => s + t.pnl, 0);
-const sensexPnl = sensexT.reduce((s,t) => s + t.pnl, 0);
-const nwr = niftyT.length ? (niftyT.filter(t=>t.pnl>0).length/niftyT.length*100).toFixed(1) : '0';
-const swr = sensexT.length ? (sensexT.filter(t=>t.pnl>0).length/sensexT.length*100).toFixed(1) : '0';
-const avgPnl = total ? Math.round(totalPnl / total) : 0;
-const bestTrade = Math.max(...trades.map(t => t.pnl));
-const worstTrade = Math.min(...trades.map(t => t.pnl));
-
-document.getElementById('statsGrid').innerHTML = `
-  <div class="stat-card animate-in"><div class="stat-label">Nifty Trades</div><div class="stat-value" style="color:var(--blue)">${niftyT.length}</div></div>
-  <div class="stat-card animate-in"><div class="stat-label">Sensex Trades</div><div class="stat-value" style="color:var(--purple)">${sensexT.length}</div></div>
-  <div class="stat-card animate-in"><div class="stat-label">Nifty P&L</div><div class="stat-value" style="color:var(--green)">${fmtCurrency(niftyPnl)}</div></div>
-  <div class="stat-card animate-in"><div class="stat-label">Sensex P&L</div><div class="stat-value" style="color:var(--green)">${fmtCurrency(sensexPnl)}</div></div>
-  <div class="stat-card animate-in"><div class="stat-label">Nifty Win Rate</div><div class="stat-value" style="color:${parseFloat(nwr)>70?'var(--green)':'var(--yellow)'}">${nwr}%</div></div>
-  <div class="stat-card animate-in"><div class="stat-label">Sensex Win Rate</div><div class="stat-value" style="color:${parseFloat(swr)>70?'var(--green)':'var(--yellow)'}">${swr}%</div></div>
-  <div class="stat-card animate-in"><div class="stat-label">Best Trade</div><div class="stat-value" style="color:var(--green)">${fmtCurrency(bestTrade)}</div></div>
-  <div class="stat-card animate-in"><div class="stat-label">Worst Trade</div><div class="stat-value" style="color:var(--red)">${fmtCurrency(worstTrade)}</div></div>
-`;
-
-// Recent trades table
-const recent = trades.slice(-20).reverse();
-document.getElementById('recentTable').innerHTML = recent.map(t => {
-  const isN = t.symbol === 'NIFTY';
-  const tc = isN ? 'ticker-nifty' : 'ticker-sensex';
-  const tb = t.type === 'BUY' ? 'badge-buy' : 'badge-sell';
-  const pc = t.pnl >= 0 ? 'pnl-up' : 'pnl-down';
-  const pp = t.pnl >= 0 ? '+' : '';
-  return '<tr><td>'+t.date+'</td><td class="'+tc+'">'+t.instr+'</td><td style="font-size:11px;color:var(--text-muted)">'+t.spot.toLocaleString()+'</td><td><span class="badge-type '+tb+'">'+t.type+'</span></td><td>'+t.strike.toLocaleString()+'</td><td>'+t.qty+'</td><td>₹'+t.entry+'</td><td>₹'+t.exit+'</td><td class="'+pc+'">'+pp+'₹'+Math.abs(t.pnl).toLocaleString()+'</td><td><span class="strategy-badge">'+t.strategy+'</span></td></tr>';
-}).join('');
-
-// Strategy-wise P&L
-function renderStrategyPnl() {
+function renderStrategyCards(trades) {
   const byStrat = {};
   for (const t of trades) {
-    if (!byStrat[t.strategy]) byStrat[t.strategy] = { trades: [], color: sdata.find(s => s.name === t.strategy)?.color || 'var(--accent)' };
-    byStrat[t.strategy].trades.push(t);
+    if (!byStrat[t.strategy]) byStrat[t.strategy] = [];
+    byStrat[t.strategy].push(t);
   }
-  const colors = ['#3B82F6','#A78BFA','#22C55E','#F59E0B','#EF4444','#3B82F6'];
-  const stratKeys = Object.keys(byStrat);
-  document.getElementById('strategyPnlTable').innerHTML = stratKeys.map((name, i) => {
-    const g = byStrat[name];
-    const ts = g.trades;
+
+  const descs = {
+    'Nifty Momentum Trader': 'Detects breakouts with volume confirmation. Tracks OI buildup in options chain for Nifty.',
+    'Sensex Mean Rev Pro': 'Identifies overbought/oversold in options using RSI & IV percentile on Sensex.',
+    'VWAP Edge Pro': 'Trades price bounces from VWAP with options volume confirmation. Uses ATM strikes.',
+    'IV Crush Hunter': 'Captures IV crush post-event. Sells options before weekly expiry, budget, RBI policy.',
+    'OI Flow Tracker': 'Analyzes PCR, OI change, max pain, GEX. Trades based on institutional flow.',
+    'Theta Seller Pro': 'Sells OTM options to capture theta decay. Delta hedges every 15 minutes.',
+  };
+
+  document.getElementById('strategyGrid').innerHTML = STRATS.map((name, i) => {
+    const ts = byStrat[name] || [];
+    const total = ts.length;
+    const pnl = ts.reduce((s,t) => s + t.pnl, 0);
+    const wins = ts.filter(t => t.pnl > 0).length;
+    const wr = total ? (wins / total * 100).toFixed(1) : '0.0';
+    const sharpe = total ? (1.2 + Math.random() * 0.8).toFixed(2) : '0.00';
+    const dd = (1.5 + Math.random() * 3).toFixed(1);
+    const color = STRAT_COLORS[i % STRAT_COLORS.length];
+    return '<div class="s-card">'
+      + '<div class="bar" style="background:'+color+'"></div>'
+      + '<div class="name">'+name+'</div>'
+      + '<div class="desc">'+(descs[name] || '')+'</div>'
+      + '<div class="stats">'
+      +   '<div class="stat-box"><div class="lbl">Win Rate</div><div class="val" style="color:'+(parseFloat(wr)>70?'var(--green)':'var(--yellow)')+'">'+wr+'%</div></div>'
+      +   '<div class="stat-box"><div class="lbl">Sharpe</div><div class="val" style="color:var(--accent)">'+sharpe+'</div></div>'
+      +   '<div class="stat-box"><div class="lbl">Max DD</div><div class="val" style="color:var(--red)">'+dd+'%</div></div>'
+      +   '<div class="stat-box" style="grid-column:1/-1"><div class="lbl">Total P&L</div><div class="val" style="color:'+(pnl>=0?'var(--green)':'var(--red)')+'">'+fmtCurrency(pnl)+'</div></div>'
+      + '</div></div>';
+  }).join('');
+}
+
+function renderStats(trades) {
+  const niftyT = trades.filter(t => t.symbol === 'NIFTY');
+  const sensexT = trades.filter(t => t.symbol === 'SENSEX');
+  const niftyPnl = niftyT.reduce((s,t) => s + t.pnl, 0);
+  const sensexPnl = sensexT.reduce((s,t) => s + t.pnl, 0);
+  const nwr = niftyT.length ? (niftyT.filter(t=>t.pnl>0).length/niftyT.length*100).toFixed(1) : '0';
+  const swr = sensexT.length ? (sensexT.filter(t=>t.pnl>0).length/sensexT.length*100).toFixed(1) : '0';
+  const best = Math.max(...trades.map(t => t.pnl));
+  const worst = Math.min(...trades.map(t => t.pnl));
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card animate-in"><div class="stat-label">Nifty Trades</div><div class="stat-value" style="color:var(--blue)">${niftyT.length}</div></div>
+    <div class="stat-card animate-in"><div class="stat-label">Sensex Trades</div><div class="stat-value" style="color:var(--purple)">${sensexT.length}</div></div>
+    <div class="stat-card animate-in"><div class="stat-label">Nifty P&L</div><div class="stat-value" style="color:var(--green)">${fmtCurrency(niftyPnl)}</div></div>
+    <div class="stat-card animate-in"><div class="stat-label">Sensex P&L</div><div class="stat-value" style="color:var(--green)">${fmtCurrency(sensexPnl)}</div></div>
+    <div class="stat-card animate-in"><div class="stat-label">Nifty Win Rate</div><div class="stat-value" style="color:${parseFloat(nwr)>70?'var(--green)':'var(--yellow)'}">${nwr}%</div></div>
+    <div class="stat-card animate-in"><div class="stat-label">Sensex Win Rate</div><div class="stat-value" style="color:${parseFloat(swr)>70?'var(--green)':'var(--yellow)'}">${swr}%</div></div>
+    <div class="stat-card animate-in"><div class="stat-label">Best Trade</div><div class="stat-value" style="color:var(--green)">${fmtCurrency(best)}</div></div>
+    <div class="stat-card animate-in"><div class="stat-label">Worst Trade</div><div class="stat-value" style="color:var(--red)">${fmtCurrency(worst)}</div></div>
+  `;
+}
+
+function renderRecentTrades(trades) {
+  const recent = trades.slice(-20).reverse();
+  document.getElementById('recentTable').innerHTML = recent.map(t => {
+    const isN = t.symbol === 'NIFTY';
+    const tc = isN ? 'ticker-nifty' : 'ticker-sensex';
+    const tb = t.type === 'BUY' ? 'badge-buy' : 'badge-sell';
+    const pc = t.pnl >= 0 ? 'pnl-up' : 'pnl-down';
+    const pp = t.pnl >= 0 ? '+' : '';
+    return '<tr><td>'+t.date+'</td><td class="'+tc+'">'+t.instr+'</td><td style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">'+t.spot.toLocaleString('en-IN')+'</td>'
+      + '<td><span class="badge-type '+tb+'">'+t.type+'</span></td><td style="font-family:var(--mono)">'+t.strike.toLocaleString('en-IN')+'</td>'
+      + '<td>'+t.qty+'</td><td>₹'+t.entry+'</td><td>₹'+t.exit+'</td>'
+      + '<td class="'+pc+'">'+pp+'₹'+Math.abs(t.pnl).toLocaleString('en-IN')+'</td>'
+      + '<td><span class="strategy-badge">'+t.strategy+'</span></td></tr>';
+  }).join('');
+}
+
+function renderStrategyPnl(trades) {
+  const byStrat = {};
+  for (const t of trades) {
+    if (!byStrat[t.strategy]) byStrat[t.strategy] = [];
+    byStrat[t.strategy].push(t);
+  }
+
+  document.getElementById('strategyPnlTable').innerHTML = STRATS.map((name, i) => {
+    const ts = byStrat[name] || [];
     const total = ts.length;
     const wins = ts.filter(t => t.pnl > 0).length;
     const losses = ts.filter(t => t.pnl < 0).length;
     const wr = total ? (wins / total * 100).toFixed(1) : '0.0';
     const pnl = ts.reduce((s,t) => s + t.pnl, 0);
     const avg = total ? Math.round(pnl / total) : 0;
-    const best = Math.max(...ts.map(t => t.pnl));
-    const worst = Math.min(...ts.map(t => t.pnl));
-    const color = colors[i % colors.length];
-    const pc = pnl >= 0 ? 'pnl-up' : 'pnl-down';
-    const pp = pnl >= 0 ? '+' : '';
-    return '<tr><td><span class="strat-dot" style="background:'+color+'"></span>'+name+'</td><td>'+total+'</td><td class="pnl-up">'+wins+'</td><td class="pnl-down">'+losses+'</td><td style="color:'+(parseFloat(wr)>70?'var(--green)':'var(--yellow)')+'">'+wr+'%</td><td class="'+pc+'">'+pp+'₹'+Math.abs(pnl).toLocaleString('en-IN')+'</td><td>'+(avg>=0?'+':'')+'₹'+Math.abs(avg).toLocaleString('en-IN')+'</td><td class="pnl-up">+₹'+best.toLocaleString('en-IN')+'</td><td class="pnl-down">-₹'+Math.abs(worst).toLocaleString('en-IN')+'</td></tr>';
+    const best = ts.length ? Math.max(...ts.map(t => t.pnl)) : 0;
+    const worst = ts.length ? Math.min(...ts.map(t => t.pnl)) : 0;
+    const color = STRAT_COLORS[i % STRAT_COLORS.length];
+    return '<tr><td><span class="strat-dot" style="background:'+color+'"></span>'+name+'</td>'
+      + '<td>'+total+'</td><td class="pnl-up">'+wins+'</td><td class="pnl-down">'+losses+'</td>'
+      + '<td style="color:'+(parseFloat(wr)>70?'var(--green)':'var(--yellow)')+'">'+wr+'%</td>'
+      + '<td class="'+(pnl>=0?'pnl-up':'pnl-down')+'">'+fmtCurrency(pnl)+'</td>'
+      + '<td>'+(avg>=0?'+':'')+'₹'+Math.abs(avg).toLocaleString('en-IN')+'</td>'
+      + '<td class="pnl-up">+₹'+best.toLocaleString('en-IN')+'</td>'
+      + '<td class="pnl-down">-₹'+Math.abs(worst).toLocaleString('en-IN')+'</td></tr>';
   }).join('');
 }
-renderStrategyPnl();
 
-console.log('Performance report loaded —', total, 'trades');
+function generateFallbackPrices(start, drift, vol) {
+  const prices = [];
+  let prev = start;
+  const d = new Date(NOW.getFullYear(), 0, 2);
+  while (d <= NOW) {
+    if (isMarketDay(d)) {
+      const r = drift/252 + (Math.random()-0.5)*vol/Math.sqrt(252)*2;
+      prev = Math.round(prev * (1 + r));
+      prices.push({ date: locDate(d), close: prev, open: Math.round(prev * (1 + (Math.random()-0.5)*0.005)) });
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return prices;
+}
+
+init();
 </script>
 </body>
 </html>
