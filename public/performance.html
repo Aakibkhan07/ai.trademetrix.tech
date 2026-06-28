@@ -126,6 +126,29 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
 .s-card .stat-box .lbl { font-size:9px; color:var(--text-muted); }
 .s-card .stat-box .val { font-size:12px; font-weight:600; font-family:var(--mono); }
 
+/* Strategy P&L table */
+.spnl-table { width:100%; border-collapse:collapse; font-size:12px; }
+.spnl-table thead th { text-align:left; padding:8px 10px; font-weight:600; color:var(--text-muted); font-size:10px; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.spnl-table tbody td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.03); white-space:nowrap; font-size:12px; }
+.spnl-table tbody tr { transition:background 0.15s; }
+.spnl-table tbody tr:hover { background:rgba(255,255,255,0.02); }
+.strat-dot { width:8px; height:8px; border-radius:2px; display:inline-block; margin-right:6px; vertical-align:middle; }
+
+/* Automation */
+.auto-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+@media (max-width:1024px) { .auto-grid { grid-template-columns:1fr 1fr; } }
+@media (max-width:640px) { .auto-grid { grid-template-columns:1fr; } }
+.auto-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center; }
+.auto-step { width:28px; height:28px; border-radius:50%; background:var(--red-bg); color:var(--accent); font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; font-family:var(--mono); }
+.auto-icon { font-size:22px; margin-bottom:6px; }
+.auto-title { font-size:13px; font-weight:600; margin-bottom:4px; }
+.auto-desc { font-size:10px; color:var(--text-muted); line-height:1.5; }
+
+/* Disclaimer card */
+.disclaimer-card { background:rgba(239,68,68,0.03); border:1px solid rgba(239,68,68,0.15); border-radius:12px; padding:20px; }
+.disclaimer-card .title { font-size:13px; font-weight:600; color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.disclaimer-card p { font-size:11px; color:var(--text-muted); line-height:1.7; margin-bottom:4px; }
+
 /* Footer */
 .footer { margin-top:40px; padding:20px 0; border-top:1px solid var(--border); text-align:center; }
 .footer p { font-size:11px; color:var(--text-muted); line-height:1.6; }
@@ -226,9 +249,70 @@ tbody tr:hover { background:rgba(255,255,255,0.02); }
   </div>
 </div>
 
+<div class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Strategy-wise P&amp;L Breakdown</div>
+      <div class="section-subtitle">Per-strategy performance metrics from generated trades</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table class="spnl-table">
+        <thead><tr><th>Strategy</th><th>Total Trades</th><th>Wins</th><th>Losses</th><th>Win Rate</th><th>Total P&amp;L</th><th>Avg P&amp;L</th><th>Best Trade</th><th>Worst Trade</th></tr></thead>
+        <tbody id="strategyPnlTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Automation Process</div>
+      <div class="section-subtitle">How our algo trading system works end-to-end</div>
+    </div>
+  </div>
+  <div class="auto-grid">
+    <div class="auto-card">
+      <div class="auto-step">1</div>
+      <div class="auto-icon">📡</div>
+      <div class="auto-title">Market Data</div>
+      <div class="auto-desc">Real-time Nifty &amp; Sensex options chain data fed via WebSocket at 100ms latency</div>
+    </div>
+    <div class="auto-card">
+      <div class="auto-step">2</div>
+      <div class="auto-icon">🧠</div>
+      <div class="auto-title">Signal Generation</div>
+      <div class="auto-desc">6 algo strategies run in parallel — momentum, mean reversion, VWAP, IV crush, OI flow, theta decay</div>
+    </div>
+    <div class="auto-card">
+      <div class="auto-step">3</div>
+      <div class="auto-icon">⚡</div>
+      <div class="auto-title">Execution Engine</div>
+      <div class="auto-desc">Smart order router selects best broker (Zerodha, Angel, Upstox) based on latency &amp; fill rates</div>
+    </div>
+    <div class="auto-card">
+      <div class="auto-step">4</div>
+      <div class="auto-icon">📊</div>
+      <div class="auto-title">Risk &amp; Reporting</div>
+      <div class="auto-desc">Real-time P&amp;L tracking, drawdown limits, automated hedging &amp; daily performance reports</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="disclaimer-card">
+    <div class="title">⚠️ Important Disclaimer</div>
+    <p><strong>Not Financial Advice:</strong> Trade Metrix Tech is a software platform for algorithmic trading. We are NOT a SEBI-registered advisor, research analyst, or investment intermediary. We do NOT provide stock tips, buy/sell recommendations, or investment advisory services.</p>
+    <p><strong>Past Performance:</strong> All performance data shown on this page is generated through simulated backtesting of trading strategies. Past performance, whether simulated or live, is NOT indicative of future results. Algorithmic trading involves substantial risk of loss and may not be suitable for all investors.</p>
+    <p><strong>No Guarantees:</strong> Trade Metrix Tech makes no guarantees or representations regarding the accuracy, completeness, or reliability of the performance data displayed. Actual trading results may differ materially from simulated or backtested results due to market conditions, liquidity, slippage, execution delays, and other factors.</p>
+    <p><strong>Trade at Your Own Risk:</strong> You alone are responsible for your trading decisions. Never trade with money you cannot afford to lose. Consult a qualified SEBI-registered financial advisor before making any investment decisions.</p>
+  </div>
+</div>
+
 <div class="footer">
   <p><span style="color:var(--accent);font-weight:600;">Trade</span> Metrix <span style="color:var(--accent);font-weight:600;">Tech</span> — Past Performance Report</p>
-  <p style="margin-top:6px;">⚠ Past performance is not indicative of future results. Backtest results do not guarantee future performance. Trade at your own risk.</p>
   <p style="margin-top:6px;">© 2026 Trade Metrix Tech</p>
 </div>
 
@@ -494,6 +578,34 @@ document.getElementById('recentTable').innerHTML = recent.map(t => {
   const pp = t.pnl >= 0 ? '+' : '';
   return '<tr><td>'+t.date+'</td><td class="'+tc+'">'+t.instr+'</td><td style="font-size:11px;color:var(--text-muted)">'+t.spot.toLocaleString()+'</td><td><span class="badge-type '+tb+'">'+t.type+'</span></td><td>'+t.strike.toLocaleString()+'</td><td>'+t.qty+'</td><td>₹'+t.entry+'</td><td>₹'+t.exit+'</td><td class="'+pc+'">'+pp+'₹'+Math.abs(t.pnl).toLocaleString()+'</td><td><span class="strategy-badge">'+t.strategy+'</span></td></tr>';
 }).join('');
+
+// Strategy-wise P&L
+function renderStrategyPnl() {
+  const byStrat = {};
+  for (const t of trades) {
+    if (!byStrat[t.strategy]) byStrat[t.strategy] = { trades: [], color: sdata.find(s => s.name === t.strategy)?.color || 'var(--accent)' };
+    byStrat[t.strategy].trades.push(t);
+  }
+  const colors = ['#3B82F6','#A78BFA','#22C55E','#F59E0B','#EF4444','#3B82F6'];
+  const stratKeys = Object.keys(byStrat);
+  document.getElementById('strategyPnlTable').innerHTML = stratKeys.map((name, i) => {
+    const g = byStrat[name];
+    const ts = g.trades;
+    const total = ts.length;
+    const wins = ts.filter(t => t.pnl > 0).length;
+    const losses = ts.filter(t => t.pnl < 0).length;
+    const wr = total ? (wins / total * 100).toFixed(1) : '0.0';
+    const pnl = ts.reduce((s,t) => s + t.pnl, 0);
+    const avg = total ? Math.round(pnl / total) : 0;
+    const best = Math.max(...ts.map(t => t.pnl));
+    const worst = Math.min(...ts.map(t => t.pnl));
+    const color = colors[i % colors.length];
+    const pc = pnl >= 0 ? 'pnl-up' : 'pnl-down';
+    const pp = pnl >= 0 ? '+' : '';
+    return '<tr><td><span class="strat-dot" style="background:'+color+'"></span>'+name+'</td><td>'+total+'</td><td class="pnl-up">'+wins+'</td><td class="pnl-down">'+losses+'</td><td style="color:'+(parseFloat(wr)>70?'var(--green)':'var(--yellow)')+'">'+wr+'%</td><td class="'+pc+'">'+pp+'₹'+Math.abs(pnl).toLocaleString('en-IN')+'</td><td>'+(avg>=0?'+':'')+'₹'+Math.abs(avg).toLocaleString('en-IN')+'</td><td class="pnl-up">+₹'+best.toLocaleString('en-IN')+'</td><td class="pnl-down">-₹'+Math.abs(worst).toLocaleString('en-IN')+'</td></tr>';
+  }).join('');
+}
+renderStrategyPnl();
 
 console.log('Performance report loaded —', total, 'trades');
 </script>
