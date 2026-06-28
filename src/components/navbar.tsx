@@ -16,10 +16,14 @@ const navLinks = [
   { label: 'FAQ', href: '#faq' },
 ];
 
-export function Navbar() {
+interface NavbarProps {
+  onOpenAuth?: (mode: 'login' | 'signup') => void;
+}
+
+export function Navbar({ onOpenAuth }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { openModal, setAuthMode } = useModal();
+  const ctx = typeof onOpenAuth === 'undefined' ? useModal() : null;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -55,8 +59,8 @@ export function Navbar() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => { setAuthMode('login'); openModal('auth'); }}>Log In</Button>
-            <Button variant="primary" size="sm" onClick={() => { setAuthMode('signup'); openModal('auth'); }}>Get Started</Button>
+            <Button variant="ghost" size="sm" onClick={() => { if (onOpenAuth) onOpenAuth('login'); else { ctx?.setAuthMode('login'); ctx?.openModal('auth'); } }}>Log In</Button>
+            <Button variant="primary" size="sm" onClick={() => { if (onOpenAuth) onOpenAuth('signup'); else { ctx?.setAuthMode('signup'); ctx?.openModal('auth'); } }}>Get Started</Button>
           </div>
 
           <button
@@ -89,8 +93,8 @@ export function Navbar() {
                 </a>
               ))}
               <div className="flex flex-col gap-3 pt-6 mt-2 border-t border-white/[0.06]">
-                <Button variant="ghost" size="md" className="w-full" onClick={() => { setAuthMode('login'); openModal('auth'); setMobileOpen(false); }}>Log In</Button>
-                <Button variant="primary" size="md" className="w-full" onClick={() => { setAuthMode('signup'); openModal('auth'); setMobileOpen(false); }}>Get Started</Button>
+                <Button variant="ghost" size="md" className="w-full" onClick={() => { if (onOpenAuth) { onOpenAuth('login'); } else { ctx?.setAuthMode('login'); ctx?.openModal('auth'); } setMobileOpen(false); }}>Log In</Button>
+                <Button variant="primary" size="md" className="w-full" onClick={() => { if (onOpenAuth) { onOpenAuth('signup'); } else { ctx?.setAuthMode('signup'); ctx?.openModal('auth'); } setMobileOpen(false); }}>Get Started</Button>
               </div>
             </div>
           </motion.div>

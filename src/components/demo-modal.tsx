@@ -359,9 +359,17 @@ function PanelMonitor() {
   );
 }
 
-export function DemoModal() {
-  const { activeModal, closeModal, openModal, setAuthMode } = useModal();
-  const isOpen = activeModal === 'demo';
+interface DemoModalProps {
+  open?: boolean;
+  onClose?: () => void;
+  onOpenAuth?: () => void;
+}
+
+export function DemoModal({ open: openProp, onClose: onCloseProp, onOpenAuth: onOpenAuthProp }: DemoModalProps) {
+  const ctx = useModal();
+  const isOpen = openProp !== undefined ? openProp : ctx.activeModal === 'demo';
+  const onClose = onCloseProp || ctx.closeModal;
+  const onOpenAuth = onOpenAuthProp || (() => { ctx.closeModal(); ctx.setAuthMode('signup'); ctx.openModal('auth'); });
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -401,10 +409,10 @@ export function DemoModal() {
 
   useEffect(() => {
     if (!isOpen) return;
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal(); };
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen, closeModal]);
+  }, [isOpen, onClose]);
 
   const step = steps[currentStep];
   const Icon = step.icon;
@@ -429,7 +437,7 @@ export function DemoModal() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={closeModal} />
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={onClose} />
 
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 30 }}
@@ -457,7 +465,7 @@ export function DemoModal() {
                   Engine running
                 </span>
                 <button
-                  onClick={closeModal}
+                  onClick={onClose}
                   className="p-1.5 rounded-lg hover:bg-white/[0.06] text-muted hover:text-white transition-all"
                 >
                   <X size={16} />
@@ -539,7 +547,7 @@ export function DemoModal() {
 
                 <div className="px-5 md:px-6 py-3 border-t border-white/[0.06] bg-card/40">
                   <button
-                    onClick={() => { closeModal(); setAuthMode('signup'); openModal('auth'); }}
+                    onClick={() => { onClose(); onOpenAuth(); }}
                     className="w-full py-2 text-xs font-medium bg-accent text-background rounded-lg hover:bg-accent-dark transition-colors inline-flex items-center justify-center gap-1 shadow-lg shadow-accent/20"
                   >
                     Start Free Trial

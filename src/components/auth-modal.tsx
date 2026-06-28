@@ -5,9 +5,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, Eye, EyeOff, ArrowUpRight, Loader2, Check, Link2 } from 'lucide-react';
 import { useModal } from '@/src/components/modal-context';
 
-export function AuthModal() {
-  const { activeModal, closeModal, authMode, setAuthMode, setUser, pendingPayment, setPendingPayment } = useModal();
-  const isOpen = activeModal === 'auth';
+interface AuthModalProps {
+  onLogin?: (email: string, broker?: string) => void;
+  onClose?: () => void;
+  open?: boolean;
+  authMode?: 'login' | 'signup';
+  onToggleMode?: () => void;
+}
+
+export function AuthModal({ onLogin: onLoginProp, onClose: onCloseProp, open: openProp, authMode: authModeProp, onToggleMode: onToggleModeProp }: AuthModalProps) {
+  const ctx = useModal();
+  const isOpen = openProp !== undefined ? openProp : ctx.activeModal === 'auth';
+  const onClose = onCloseProp || ctx.closeModal;
+  const authMode = authModeProp || ctx.authMode;
+  const onToggleMode = onToggleModeProp || (() => ctx.setAuthMode(authMode === 'login' ? 'signup' : 'login'));
+  const onLogin = onLoginProp || ((email: string, broker?: string) => {
+    ctx.setUser({ email, broker });
+    ctx.closeModal();
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,11 +40,11 @@ export function AuthModal() {
   useEffect(() => {
     if (!isOpen) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen, closeModal]);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -43,8 +58,8 @@ export function AuthModal() {
 
   const handleLogin = () => {
     setError('');
-    setUser({ email, broker: broker || undefined });
-    closeModal();
+    onLogin(email, broker);
+    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,8 +89,8 @@ export function AuthModal() {
       setSubmitting(false);
       setStep(2);
       setTimeout(() => {
-        setUser({ email, broker: broker || undefined });
-        closeModal();
+        onLogin(email, broker);
+        onClose();
       }, 2000);
       return;
     }
@@ -94,7 +109,7 @@ export function AuthModal() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={closeModal} />
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 40 }}
@@ -111,7 +126,7 @@ export function AuthModal() {
                 {authMode === 'signup' ? (step === 0 ? 'Create Account' : step === 1 ? 'Choose Broker' : 'Connect Broker') : 'Welcome Back'}
               </span>
               <button
-                onClick={closeModal}
+                onClick={onClose}
                 className="p-1.5 rounded-lg hover:bg-white/[0.06] text-muted hover:text-white transition-all"
               >
                 <X size={18} />
@@ -337,7 +352,7 @@ export function AuthModal() {
               <button
                 type="button"
                 onClick={() => {
-                  setAuthMode(authMode === 'login' ? 'signup' : 'login');
+                  onToggleMode();
                   setStep(0);
                 }}
                 className="w-full py-2.5 text-sm font-medium border border-white/[0.08] text-muted rounded-xl hover:text-white hover:border-white/20 transition-all"

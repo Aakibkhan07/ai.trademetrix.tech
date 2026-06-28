@@ -8,7 +8,6 @@ import { MarketTicker } from '@/src/components/market-ticker';
 import { Footer } from '@/src/components/footer';
 import { Section, FadeIn } from '@/src/components/ui/section';
 import { Button } from '@/src/components/ui/button';
-import { useModal, ModalProvider } from '@/src/components/modal-context';
 import { useRazorpay } from '@/src/hooks/use-razorpay';
 import { ConsentModal, hasConsented } from '@/src/components/consent-modal';
 import { AuthModal } from '@/src/components/auth-modal';
@@ -113,11 +112,15 @@ export default function EnterprisePage() {
   const guarded = capital * 0.02;
   const hitsToPay = Math.max(1, Math.round(PLAN_COST / hit));
 
-  const { user, openModal, setAuthMode, pendingPayment, setPendingPayment } = useModal();
   const { initiatePayment, loading, error, success, dismissSuccess } = useRazorpay();
+  const [user, setUser] = useState<{ email: string; name?: string } | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [subscription, setSubscription] = useState<{ active: boolean; plan: string } | null>(null);
+  const [showDemoModal, setShowDemoModal] = useState(false);
   const [showConsent, setShowConsent] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ name: string; price: string } | null>(null);
+  const [pendingPayment, setPendingPayment] = useState<{ amount: number; plan: string } | null>(null);
 
   useEffect(() => {
     if (user && pendingPayment) {
@@ -143,44 +146,39 @@ export default function EnterprisePage() {
   }, [user, pendingPayment, initiatePayment]);
 
   const handlePayNow = (plan: { name: string; price: string }) => {
-    if (!user) {
-      setPendingPayment({ amount: parsePrice(plan.price), plan: plan.name });
-      setAuthMode('signup');
-      openModal('auth');
-      return;
-    }
-    if (!hasConsented()) {
-      setPendingPlan(plan);
-      setShowConsent(true);
-      return;
-    }
-    initiatePayment({
-      amount: parsePrice(plan.price),
-      plan: plan.name,
-      description: `${plan.name} - Trade Metrix Enterprise`,
-      email: user.email,
-      name: user.name,
-      onSuccess: () => {
-        setSubscription({ active: true, plan: plan.name });
-      },
-    });
+    setPendingPayment({ amount: parsePrice(plan.price), plan: plan.name });
+    setAuthMode('signup');
+    setShowAuthModal(true);
   };
 
   const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 
-  const [clicked, setClicked] = useState(0);
+  const handleUserLogin = (email: string, broker?: string) => {
+    setUser({ email, name: email.split('@')[0] });
+    setShowAuthModal(false);
+  };
+
+  const handleOpenAuth = (mode: 'login' | 'signup') => {
+    setAuthMode(mode);
+    setShowAuthModal(true);
+    setShowDemoModal(false);
+  };
 
   return (
-    <ModalProvider>
-      <Navbar />
+    <>
+      <Navbar onOpenAuth={handleOpenAuth} />
       <MarketTicker />
 
-      <div style={{ position: 'fixed', bottom: 10, right: 10, zIndex: 9999, background: '#ef4444', color: '#0A0A0A', padding: '8px 16px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }} onClick={() => setClicked(c => c + 1)}>
-        Test Click: {clicked}
-      </div>
 
-      <DemoModal />
-      <AuthModal />
+
+      <DemoModal open={showDemoModal} onClose={() => setShowDemoModal(false)} onOpenAuth={() => handleOpenAuth('signup')} />
+      <AuthModal
+        open={showAuthModal}
+        onLogin={handleUserLogin}
+        onClose={() => setShowAuthModal(false)}
+        authMode={authMode}
+        onToggleMode={() => setAuthMode(m => m === 'login' ? 'signup' : 'login')}
+      />
       <ConsentModal
         open={showConsent}
         onAccept={() => {
@@ -973,7 +971,7 @@ export default function EnterprisePage() {
       </main>
 
       <Footer />
-    </ModalProvider>
+    </>
   );
 }
 
